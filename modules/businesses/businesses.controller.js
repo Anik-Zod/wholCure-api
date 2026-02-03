@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { business } from "./businesses.model.js";
 
- d
+ 
 // add business
 export default async function addBusiness(req,res,next){
     const {title,description,tags,logo,details} = req.body;
