@@ -8,6 +8,8 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
 import cookieParser from "cookie-parser";
 import businessesRoute from "./modules/businesses/businesses.route.js";
+import jobRoute from "./modules/careers/jobs/job.route.js";
+import applicationRoute from "./modules/careers/applications/application.route.js";
 
 dotenv.config();
 const app = express();
@@ -50,15 +52,17 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use("/api/businesses", businessesRoute);
+app.use("/api/jobs", jobRoute);
+app.use("/api/applications", applicationRoute);
 
 
 
 
 
 //health check route
-app.use("/",(req,res)=>{
+app.use("/", (req, res) => {
   console.log("API is running...");
-  res.json({message:"API is running..."});
+  res.json({ message: "API is running..." });
 })
 
 // Global error handler (do not leak stack in production)

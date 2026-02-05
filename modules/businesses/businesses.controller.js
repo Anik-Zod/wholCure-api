@@ -106,3 +106,4 @@ export async function getBusinessById(req,res,next){
     }
     res.status(200).json({data:response});
 }
+
