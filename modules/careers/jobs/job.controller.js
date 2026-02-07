@@ -12,11 +12,10 @@ export default async function addJob(req, res) {
         location,
         experience_level,
         salary_range,
-        company_name,
         is_active
     } = req.body || {};
 
-    if (!job_title || !employment_type || !work_mode || !industry || !job_description || !location || !experience_level || !company_name) {
+    if (!job_title || !employment_type || !work_mode || !industry || !job_description || !location || !experience_level) {
         return res.status(400).json({ message: "All required fields must be provided" });
     }
 
@@ -29,7 +28,6 @@ export default async function addJob(req, res) {
         location,
         experience_level,
         salary_range,
-        company_name,
         is_active: is_active !== undefined ? is_active : true
     });
 

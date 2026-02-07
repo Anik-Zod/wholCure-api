@@ -66,7 +66,7 @@ export async function deleteApplication(req, res) {
 
 // get all applications
 export async function getAllApplications(req, res) {
-    const response = await Application.find({}).populate('job_id', 'job_title company_name');
+    const response = await Application.find({}).populate('job_id', 'job_title');
     res.status(200).json({ data: response });
 }
 
@@ -78,7 +78,7 @@ export async function getApplicationById(req, res) {
         return res.status(400).json({ message: "Invalid Application ID" });
     }
 
-    const response = await Application.findById(id).populate('job_id', 'job_title company_name');
+    const response = await Application.findById(id).populate('job_id', 'job_title');
 
     if (!response) {
         return res.status(404).json({ message: "Application not found" });

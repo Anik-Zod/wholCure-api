@@ -31,14 +31,9 @@ const jobSchema = new mongoose.Schema(
       required: true,
     },
 
-    salary_range: {          // renamed for clarity
+    salary_range: {          
       min: { type: Number },
       max: { type: Number },
-    },
-
-    company_name: {             // reference company posting the job
-      type: String,
-      required: true,
     },
 
     is_active: { type: Boolean, default: true },
