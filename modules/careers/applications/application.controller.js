@@ -45,8 +45,8 @@ export default async function addApplication(req, res) {
             const stream = cloudinary.uploader.upload_stream(
                 {
                     folder: "resumes",
-                    resource_type: "auto",
-                    format: "pdf",
+                    resource_type: "raw",
+                    public_id: req.file.originalname,
                     access_mode: "public",
                 },
                 (error, result) => {
