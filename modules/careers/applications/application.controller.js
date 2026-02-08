@@ -1,15 +1,16 @@
 import mongoose from "mongoose";
 import { Application } from "./application.model.js";
 import { Job } from "../jobs/job.model.js";
+import cloudinary from "../../../config/cloudinary.js";
 
 // add application
 export default async function addApplication(req, res) {
-    const {job_id} = req.params;
-    
-    if(!job_id)  return res.status(400).json({ message: "Job ID is required" });
-    
+    const { job_id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(job_id)) return res.status(400).json({ message: "Invalid Job ID" });
+    // 1. Immediate Validation
+    if (!mongoose.Types.ObjectId.isValid(job_id)) {
+        return res.status(400).json({ message: "Invalid Job ID format" });
+    }
 
     const {
         full_name,
@@ -18,20 +19,48 @@ export default async function addApplication(req, res) {
         linkedin,
         years_of_experience,
         bio,
-        resume_url,
         portfolio_url,
-    } = req.body || {};
+    } = req.body;
 
-    if (!job_id || !full_name || !email || !phone) {
-        return res.status(400).json({ message: "Job ID, Name, Email, and Phone are required" });
+    // job_id comes from params, others from body
+    if (!full_name || !email || !phone) {
+        return res.status(400).json({ message: "Name, Email, and Phone are required" });
     }
 
-    // Check if job exists
+    // 2. Check File
+    if (!req.file) {
+        return res.status(400).json({ message: "Resume PDF is required" });
+    }
+
+    // 3. Database Check
     const job = await Job.findById(job_id);
     if (!job) {
         return res.status(404).json({ message: "Job not found" });
     }
 
+    // 4. Cloudinary Upload
+    let uploadResult;
+    try {
+        uploadResult = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                {
+                    folder: "resumes",
+                    resource_type: "raw",
+                    access_mode: "public",
+                },
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                }
+            );
+            stream.end(req.file.buffer);
+        });
+    } catch (error) {
+        console.error("Cloudinary upload error:", error);
+        return res.status(500).json({ message: "Failed to upload resume to Cloudinary" });
+    }
+
+    // 5. Save to Database
     const response = await Application.create({
         job_id,
         full_name,
@@ -40,11 +69,14 @@ export default async function addApplication(req, res) {
         linkedin,
         years_of_experience,
         bio,
-        resume_url,
+        resume_url: uploadResult.secure_url,
         portfolio_url,
     });
 
-    res.status(201).json({ message: "Application submitted successfully", data: response });
+    res.status(201).json({
+        message: "Application submitted successfully",
+        data: response
+    });
 }
 
 // delete application

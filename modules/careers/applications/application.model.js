@@ -32,6 +32,6 @@ const applicationSchema = new mongoose.Schema(
 // Indexes for faster filtering
 applicationSchema.index({ job_id: 1 });                     // All applications for a job
 applicationSchema.index({ email: 1 });                      // All applications by same email
-applicationSchema.index({ job_id: 1, email: 1 }, { unique: true }); // Prevent duplicate application to same job
+applicationSchema.index({ job_id: 1, email: 1 }, { unique: false }); // Prevent duplicate application to same job
 
 export const Application = mongoose.model("Application", applicationSchema);
