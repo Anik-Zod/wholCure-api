@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const applicationSchema = new mongoose.Schema(
   {
-    job_id: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "Job", 
-      required: true 
+    job_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      required: true
     },
 
     // Candidate info (no login needed)
@@ -13,15 +13,15 @@ const applicationSchema = new mongoose.Schema(
     email: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     linkedin: { type: String, trim: true },
-    years_of_experience: { type: Number },
+    years_of_experience: { type: String },
     bio: { type: String, trim: true },           // Why hire me
     resume_url: { type: String, trim: true },
     portfolio_url: { type: String, trim: true },
 
-    status: { 
-      type: String, 
-      enum: ["Applied", "Shortlisted", "Rejected", "Hired"], 
-      default: "Applied" 
+    status: {
+      type: String,
+      enum: ["Applied", "Shortlisted", "Rejected", "Hired"],
+      default: "Applied"
     },
   },
   {

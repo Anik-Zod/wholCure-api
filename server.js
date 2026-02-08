@@ -59,11 +59,17 @@ app.use("/api/applications", applicationRoute);
 
 
 
-//health check route
-app.use("/", (req, res) => {
-  console.log("API is running...");
-  res.json({ message: "API is running..." });
-})
+// Health check route - only for the root path
+app.get("/api/health", (req, res) => {
+  res.json({ message: "API is healthy and running..." });
+});
+
+// 404 Handler for unmatched routes
+app.use((req, res, next) => {
+  const error = new Error(`Not Found - ${req.originalUrl}`);
+  res.status(404);
+  next(error);
+});
 
 // Global error handler (do not leak stack in production)
 app.use((err, req, res, next) => {
