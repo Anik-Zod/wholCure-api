@@ -22,7 +22,7 @@ export default async function addApplication(req, res) {
         portfolio_url,
     } = req.body;
 
-    // job_id comes from params, others from body
+    // Check required fields
     if (!full_name || !email || !phone) {
         return res.status(400).json({ message: "Name, Email, and Phone are required" });
     }
@@ -32,59 +32,65 @@ export default async function addApplication(req, res) {
         return res.status(400).json({ message: "Resume PDF is required" });
     }
 
-    // 3. Database Check
-    const job = await Job.findById(job_id);
-    if (!job) {
-        return res.status(404).json({ message: "Job not found" });
-    }
-
-    // 4. Cloudinary Upload
-    let uploadResult;
     try {
-        const cleanFileName = req.file.originalname.replace(/[^a-z0-9.]/gi, '_');
-        const uniquePublicId = `resume_${Date.now()}_${cleanFileName}`;
+        // 3. Database Check (Ensure job exists before uploading to Cloudinary)
+        const job = await Job.findById(job_id);
+        if (!job) {
+            return res.status(404).json({ message: "Job not found" });
+        }
 
-        uploadResult = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream(
-                {
-                    folder: "resumes",
-                    resource_type: "raw",
-                    public_id: uniquePublicId,
-                    access_mode: "public",
-                },
-                (error, result) => {
-                    if (error) {
-                        console.error("Cloudinary upload callback error:", error);
-                        return reject(error);
+        // 4. Cloudinary Upload
+        let uploadResult;
+        try {
+            uploadResult = await new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: "resumes",
+                        resource_type: "auto", // Detects PDF automatically
+                        format: "pdf",         // Ensures the file is treated as a PDF
+                    },
+                    (error, result) => {
+                        if (error) return reject(error);
+                        resolve(result);
                     }
-                    resolve(result);
-                }
-            );
-            stream.end(req.file.buffer);
-        });
-        console.log("Cloudinary upload successful:", uploadResult.secure_url);
-    } catch (error) {
-        console.error("Cloudinary upload catch error:", error);
-        return res.status(500).json({ message: "Failed to upload resume to Cloudinary", error: error.message });
+                );
+                stream.end(req.file.buffer);
+            });
+        } catch (uploadError) {
+            console.error("Cloudinary upload error:", uploadError);
+            return res.status(500).json({ message: "Failed to upload resume to Cloudinary" });
+        }
+
+        // 5. Save to Database
+        try {
+            const response = await Application.create({
+                job_id,
+                full_name,
+                email,
+                phone,
+                linkedin,
+                years_of_experience,
+                bio,
+                resume_url: uploadResult.secure_url, // Using secure_url for HTTPS
+                portfolio_url,
+            });
+
+            return res.status(201).json({
+                message: "Application submitted successfully",
+                data: response
+            });
+        } catch (dbError) {
+            // Rollback: Delete file from Cloudinary if DB save fails
+            await cloudinary.uploader.destroy(uploadResult.public_id, { resource_type: 'raw' });
+            
+            console.error("Database save error:", dbError);
+            return res.status(500).json({ message: "Failed to save application to database" });
+        }
+
+    } catch (globalError) {
+        console.error("Server error:", globalError);
+        return res.status(500).json({ message: "Internal server error" });
     }
-
-    // 5. Save to Database
-    const response = await Application.create({
-        job_id,
-        full_name,
-        email,
-        phone,
-        linkedin,
-        years_of_experience,
-        bio,
-        resume_url: uploadResult.secure_url,
-        portfolio_url,
-    });
-
-    res.status(201).json({
-        message: "Application submitted successfully",
-        data: response
-    });
 }
 
 // delete application
