@@ -41,24 +41,31 @@ export default async function addApplication(req, res) {
     // 4. Cloudinary Upload
     let uploadResult;
     try {
+        const cleanFileName = req.file.originalname.replace(/[^a-z0-9.]/gi, '_');
+        const uniquePublicId = `resume_${Date.now()}_${cleanFileName}`;
+
         uploadResult = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
                 {
                     folder: "resumes",
                     resource_type: "raw",
-                    public_id: req.file.originalname,
+                    public_id: uniquePublicId,
                     access_mode: "public",
                 },
                 (error, result) => {
-                    if (error) return reject(error);
+                    if (error) {
+                        console.error("Cloudinary upload callback error:", error);
+                        return reject(error);
+                    }
                     resolve(result);
                 }
             );
             stream.end(req.file.buffer);
         });
+        console.log("Cloudinary upload successful:", uploadResult.secure_url);
     } catch (error) {
-        console.error("Cloudinary upload error:", error);
-        return res.status(500).json({ message: "Failed to upload resume to Cloudinary" });
+        console.error("Cloudinary upload catch error:", error);
+        return res.status(500).json({ message: "Failed to upload resume to Cloudinary", error: error.message });
     }
 
     // 5. Save to Database
