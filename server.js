@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 
 // Basic env validation (fail-fast or warn when critical values are missing)
-const requiredEnvs = ["MONGO_URI", "FRONTEND_URL", "ADMIN_URL"];
+const requiredEnvs = ["MONGO_URI", "FRONTEND_URL", "ADMIN_URL", "FRONTEND_URL_LOCAL", "ADMIN_URL_LOCAL"];
 const missing = requiredEnvs.filter((k) => !process.env[k]);
 if (missing.length) {
   console.warn(`Warning: Missing required env vars: ${missing.join(", ")}. ` +
@@ -35,7 +35,7 @@ const limiter = rateLimit({
 // app.use(limiter);
 
 // CORS Middleware (before any route)
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL].filter(Boolean);
 app.use(
   cors({
     origin: allowedOrigins.length ? allowedOrigins : false,
