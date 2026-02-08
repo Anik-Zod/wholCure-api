@@ -4,8 +4,14 @@ import { Job } from "../jobs/job.model.js";
 
 // add application
 export default async function addApplication(req, res) {
+    const {job_id} = req.params;
+    
+    if(!job_id)  return res.status(400).json({ message: "Job ID is required" });
+    
+
+    if (!mongoose.Types.ObjectId.isValid(job_id)) return res.status(400).json({ message: "Invalid Job ID" });
+
     const {
-        job_id,
         full_name,
         email,
         phone,
@@ -14,15 +20,10 @@ export default async function addApplication(req, res) {
         bio,
         resume_url,
         portfolio_url,
-        status
     } = req.body || {};
 
     if (!job_id || !full_name || !email || !phone) {
         return res.status(400).json({ message: "Job ID, Name, Email, and Phone are required" });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(job_id)) {
-        return res.status(400).json({ message: "Invalid Job ID" });
     }
 
     // Check if job exists
@@ -41,7 +42,6 @@ export default async function addApplication(req, res) {
         bio,
         resume_url,
         portfolio_url,
-        status
     });
 
     res.status(201).json({ message: "Application submitted successfully", data: response });

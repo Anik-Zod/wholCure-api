@@ -3,7 +3,7 @@ import addApplication, { deleteApplication, getAllApplications, getApplicationBy
 
 const applicationRoute = express.Router();
 
-applicationRoute.post("/", addApplication);
+applicationRoute.post("/:job_id", addApplication);
 applicationRoute.delete("/:id", deleteApplication);
 applicationRoute.get("/", getAllApplications);
 applicationRoute.get("/:id", getApplicationById);
