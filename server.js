@@ -45,6 +45,8 @@ app.use(
   })
 );
 
+app.options('*', cors());
+
 app.all("/api/auth/*splat", toNodeHandler(auth))
 
 app.use(express.json());
