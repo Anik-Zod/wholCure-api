@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import businessesRoute from "./modules/businesses/businesses.route.js";
 import jobRoute from "./modules/careers/jobs/job.route.js";
 import applicationRoute from "./modules/careers/applications/application.route.js";
+import AdminRouter from "./modules/admin/admin.route.js";
 
 dotenv.config();
 const app = express();
@@ -54,7 +55,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/businesses", businessesRoute);
 app.use("/api/jobs", jobRoute);
 app.use("/api/applications", applicationRoute);
-
+app.use("/api/admin",AdminRouter);
 
 
 
@@ -73,6 +74,12 @@ app.use((req, res, next) => {
 
 // Global error handler (do not leak stack in production)
 app.use((err, req, res, next) => {
+  // Handle Mongoose validation errors specifically to return a 400 status.
+  // This keeps controller logic cleaner.
+  if (err.name === 'ValidationError') {
+    err.status = 400;
+  }
+
   const errorStatus = err.status || 500;
   const errorMessage = err.message || "Something went wrong";
 
