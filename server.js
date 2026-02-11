@@ -11,6 +11,7 @@ import businessesRoute from "./modules/businesses/businesses.route.js";
 import jobRoute from "./modules/careers/jobs/job.route.js";
 import applicationRoute from "./modules/careers/applications/application.route.js";
 import AdminRouter from "./modules/admin/admin.route.js";
+import productRouter from "./modules/ogaglows/products/product.route.js";
 
 dotenv.config();
 const app = express();
@@ -58,6 +59,9 @@ app.use("/api/businesses", businessesRoute);
 app.use("/api/jobs", jobRoute);
 app.use("/api/applications", applicationRoute);
 app.use("/api/admin",AdminRouter);
+
+// ogaglow
+app.use("/api/ogaglow/products", productRouter);
 
 
 
