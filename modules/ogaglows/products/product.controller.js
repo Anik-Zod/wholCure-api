@@ -37,7 +37,7 @@ export const getAllProducts = async (req, res) => {
 
   const products = await Product.find(query)
     .select(
-      "name price offerPrice images category averageRating totalReviews countInStock"
+      "name description price offerPrice images category averageRating totalReviews countInStock"
     )
     .sort(sortOption)
     .skip(skip)

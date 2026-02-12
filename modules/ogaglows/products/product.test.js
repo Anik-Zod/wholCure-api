@@ -65,6 +65,7 @@ describe("Product API", () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.success).toBe(true);
             expect(res.body.data.length).toBe(1);
+            expect(res.body.data[0].description).toBe(sampleProduct.description);
             expect(res.body.pagination.total).toBe(1);
         });
 
