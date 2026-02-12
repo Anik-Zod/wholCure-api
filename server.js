@@ -39,7 +39,7 @@ const limiter = rateLimit({
 // app.use(limiter);
 
 // CORS Middleware (before any route)
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL, process.env.OGAGLOW_URL].filter(Boolean);
 app.use(
   cors({
     origin: allowedOrigins.length ? allowedOrigins : false,
