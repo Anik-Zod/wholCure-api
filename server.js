@@ -12,6 +12,7 @@ import jobRoute from "./modules/careers/jobs/job.route.js";
 import applicationRoute from "./modules/careers/applications/application.route.js";
 import AdminRouter from "./modules/admin/admin.route.js";
 import productRouter from "./modules/ogaglows/products/product.route.js";
+import customerRouter from "./modules/ogaglows/customers/customer.route.js";
 
 dotenv.config();
 const app = express();
@@ -62,6 +63,7 @@ app.use("/api/admin", AdminRouter);
 
 // ogaglow
 app.use("/api/ogaglow/products", productRouter);
+app.use("/api/ogaglow/customers", customerRouter);
 
 
 

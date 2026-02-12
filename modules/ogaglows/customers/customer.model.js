@@ -37,11 +37,6 @@ const customerSchema = new mongoose.Schema(
       enum: ["customer", "staff", "admin"],
       default: "customer",
     },
-
-    password: {
-      type: String,
-      required: false, // not mandatory now
-    },
   },
   { timestamps: true }
 );
