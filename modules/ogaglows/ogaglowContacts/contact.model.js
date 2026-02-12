@@ -25,8 +25,7 @@ const contactSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Index for fast login check
-contactSchema.index({ email: 1 });
+
 
 const Contact = mongoose.model("Contact", contactSchema);
 export default Contact;

@@ -13,6 +13,7 @@ import applicationRoute from "./modules/careers/applications/application.route.j
 import AdminRouter from "./modules/admin/admin.route.js";
 import productRouter from "./modules/ogaglows/products/product.route.js";
 import customerRouter from "./modules/ogaglows/customers/customer.route.js";
+import contact_us_Router from "./modules/ogaglows/ogaglowContacts/contact.route.js";
 
 dotenv.config();
 const app = express();
@@ -64,8 +65,7 @@ app.use("/api/admin", AdminRouter);
 // ogaglow
 app.use("/api/ogaglow/products", productRouter);
 app.use("/api/ogaglow/customers", customerRouter);
-
-
+app.use("/api/ogaglow/contact-us", contact_us_Router);
 
 
 // Health check route - only for the root path

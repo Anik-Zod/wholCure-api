@@ -35,8 +35,7 @@ const adminSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for fast login check
-adminSchema.index({ email: 1 });
+
 
 const Admin = mongoose.model("Admin", adminSchema);
 export default Admin;

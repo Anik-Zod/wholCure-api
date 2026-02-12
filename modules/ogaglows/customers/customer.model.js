@@ -41,8 +41,8 @@ const customerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes for faster queries
-customerSchema.index({ email: 1 });
+
+// Index for faster queries
 customerSchema.index({ phone: 1 });
 
 const Customer = mongoose.model("Customer", customerSchema);
