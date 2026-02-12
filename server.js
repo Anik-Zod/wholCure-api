@@ -58,7 +58,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/businesses", businessesRoute);
 app.use("/api/jobs", jobRoute);
 app.use("/api/applications", applicationRoute);
-app.use("/api/admin",AdminRouter);
+app.use("/api/admin", AdminRouter);
 
 // ogaglow
 app.use("/api/ogaglow/products", productRouter);
@@ -116,12 +116,16 @@ const port = process.env.PORT || 8800;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(port, () => {
-      console.log(`🚀 Server is running at http://localhost:${port}`);
-    });
+    if (process.env.NODE_ENV !== 'test') {
+      app.listen(port, () => {
+        console.log(`🚀 Server is running at http://localhost:${port}`);
+      });
+    }
   } catch (err) {
     console.error("❌ Failed to start server:", err);
   }
 };
 
 startServer();
+
+export default app;

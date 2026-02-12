@@ -89,6 +89,7 @@ export const updateProduct = async (req, res) => {
   res.json({ success: true, data: product });
 };
 
+
 // Mark product as out of stock
 export const markOutOfStock = async (req, res) => {
   const { id } = req.params;
