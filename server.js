@@ -11,6 +11,7 @@ import businessesRoute from "./modules/businesses/businesses.route.js";
 import jobRoute from "./modules/careers/jobs/job.route.js";
 import applicationRoute from "./modules/careers/applications/application.route.js";
 import AdminRouter from "./modules/admin/admin.route.js";
+import productRouter from "./modules/ogaglows/products/product.route.js";
 
 dotenv.config();
 const app = express();
@@ -45,7 +46,7 @@ app.use(
   })
 );
 
-app.options('*', cors());
+
 
 app.all("/api/auth/*splat", toNodeHandler(auth))
 
@@ -57,7 +58,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/businesses", businessesRoute);
 app.use("/api/jobs", jobRoute);
 app.use("/api/applications", applicationRoute);
-app.use("/api/admin",AdminRouter);
+app.use("/api/admin", AdminRouter);
+
+// ogaglow
+app.use("/api/ogaglow/products", productRouter);
 
 
 
@@ -112,12 +116,16 @@ const port = process.env.PORT || 8800;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(port, () => {
-      console.log(`🚀 Server is running at http://localhost:${port}`);
-    });
+    if (process.env.NODE_ENV !== 'test') {
+      app.listen(port, () => {
+        console.log(`🚀 Server is running at http://localhost:${port}`);
+      });
+    }
   } catch (err) {
     console.error("❌ Failed to start server:", err);
   }
 };
 
 startServer();
+
+export default app;
