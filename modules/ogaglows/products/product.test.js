@@ -82,6 +82,28 @@ describe("Product API", () => {
         });
     });
 
+    describe("GET /api/ogaglow/products/:id", () => {
+        it("should get a single product by id", async () => {
+            const product = await Product.create(sampleProduct);
+
+            const res = await request(app).get(`/api/ogaglow/products/${product._id}`);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.name).toBe(sampleProduct.name);
+            expect(res.body.data._id.toString()).toBe(product._id.toString());
+        });
+
+        it("should return 404 if product not found", async () => {
+            const id = new mongoose.Types.ObjectId();
+            const res = await request(app).get(`/api/ogaglow/products/${id}`);
+
+            expect(res.statusCode).toBe(404);
+            expect(res.body.success).toBe(false);
+            expect(res.body.message).toBe("Product not found");
+        });
+    });
+
     describe("PUT /api/ogaglow/products/:id", () => {
         it("should update a product", async () => {
             const product = await Product.create(sampleProduct);

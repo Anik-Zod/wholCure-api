@@ -1,4 +1,5 @@
 import Product from "./product.model.js";
+import Review from "../reviews/review.model.js";
 
 // Get all products with search, filter, sort, pagination
 export const getAllProducts = async (req, res) => {
@@ -54,6 +55,19 @@ export const getAllProducts = async (req, res) => {
       pages: Math.ceil(total / limit),
     },
   });
+};
+
+// Get single product
+export const getProductById = async (req, res) => {
+  const { id } = req.params;
+
+  const product = await Product.findById(id).populate("reviews");
+
+  if (!product) {
+    return res.status(404).json({ success: false, message: "Product not found" });
+  }
+
+  res.json({ success: true, data: product });
 };
 
 // Add product
