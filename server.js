@@ -14,6 +14,7 @@ import AdminRouter from "./modules/admin/admin.route.js";
 import productRouter from "./modules/ogaglows/products/product.route.js";
 import customerRouter from "./modules/ogaglows/customers/customer.route.js";
 import contact_us_Router from "./modules/ogaglows/ogaglowContacts/contact.route.js";
+import MembarRouter from "./modules/admin/member/membar.route.js";
 
 dotenv.config();
 const app = express();
@@ -61,6 +62,7 @@ app.use("/api/businesses", businessesRoute);
 app.use("/api/jobs", jobRoute);
 app.use("/api/applications", applicationRoute);
 app.use("/api/admin", AdminRouter);
+app.use("/api/members", MembarRouter);
 
 // ogaglow
 app.use("/api/ogaglow/products", productRouter);

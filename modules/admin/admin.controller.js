@@ -70,3 +70,4 @@ export async function updateUI(req, res) {
         return res.status(500).json({ error: "Failed to update UI" });
     }
 }
+
