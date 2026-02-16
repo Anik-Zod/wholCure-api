@@ -1,7 +1,8 @@
 import Product from "./product.model.js";
-import Review from "../reviews/review.model.js";
+import reviewModel from "../reviews/review.model.js";
 
-// Get all products with search, filter, sort, pagination
+// @desc    Get all products with search, filter, sort, pagination
+// @route   GET /api/ogaglow/products
 export const getAllProducts = async (req, res) => {
   const {
     keyword,
@@ -25,7 +26,7 @@ export const getAllProducts = async (req, res) => {
   }
 
   // Multi-field sort
-  let sortOption = { createdAt: -1 }; // default
+  let sortOption = { createdAt: -1 }; 
   if (sort) {
     sortOption = {};
     sort.split(",").forEach((s) => {
@@ -38,7 +39,7 @@ export const getAllProducts = async (req, res) => {
 
   const products = await Product.find(query)
     .select(
-      "name description price offerPrice images category averageRating totalReviews countInStock"
+      "name description price discount images category averageRating totalReviews countInStock"
     )
     .sort(sortOption)
     .skip(skip)
@@ -57,10 +58,12 @@ export const getAllProducts = async (req, res) => {
   });
 };
 
-// Get single product
+
+
+// @desc    Get single product
+// @route   GET /api/ogaglow/products/:id
 export const getProductById = async (req, res) => {
   const { id } = req.params;
-
   const product = await Product.findById(id).populate("reviews");
 
   if (!product) {
@@ -70,47 +73,80 @@ export const getProductById = async (req, res) => {
   res.json({ success: true, data: product });
 };
 
-// Add product
+
+
+
+
+// @desc    Add new product
+// @route   POST /api/ogaglow/products
 export const addProduct = async (req, res) => {
-  const { name, description, price, offerPrice, category, images = [], countInStock } = req.body || {};
+  const { 
+    name, description, price, discountValue, 
+    discountType, category, images, countInStock 
+  } = req.body;
 
   if (!name || !description || !price || !category || countInStock === undefined) {
-    return res.status(400).json({ success: false, message: "All fields are required" });
+    return res.status(400).json({ success: false, message: "Required fields missing" });
   }
 
-  const product = await Product.create({ name, description, price, offerPrice, category, images, countInStock });
+  const discount = {
+    type: discountType || "percentage",
+    value: discountValue || 0,
+    isActive: discountValue > 0,
+  };
 
-  res.status(201).json({ success: true, data: product });
+  const product = await Product.create({
+    name,
+    description,
+    price,
+    discount,
+    category,
+    images,
+    countInStock
+  });
+
+  res.status(201).json({ success: true, data: product, message: "Product created successfully" });
 };
 
-// Update product
+// @desc    Update product
+// @route   PUT /api/ogaglow/products/:id
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { name, description, price, offerPrice, category, images = [], countInStock } = req.body || {};
+  const { 
+    name, description, price, discountValue, 
+    discountType, discountIsActive, category, images, countInStock 
+  } = req.body;
 
-  if (!name || !description || !price || !category || countInStock === undefined) {
-    return res.status(400).json({ success: false, message: "All fields are required" });
+  const product = await Product.findById(id);
+  if (!product) {
+    return res.status(404).json({ success: false, message: "Product not found" });
   }
 
-  const product = await Product.findByIdAndUpdate(
-    id,
-    { name, description, price, offerPrice, category, images, countInStock },
-    { new: true }
-  );
+  // Update nested discount fields
+  if (discountValue !== undefined) product.discount.value = discountValue;
+  if (discountType !== undefined) product.discount.type = discountType;
+  if (discountIsActive !== undefined) product.discount.isActive = discountIsActive;
 
-  if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+  // Update top-level fields
+  const updateData = { name, description, price, category, images, countInStock };
+  Object.keys(updateData).forEach(key => {
+    if (updateData[key] !== undefined) product[key] = updateData[key];
+  });
 
-  res.json({ success: true, data: product });
+  await product.save();
+
+  res.json({ success: true, data: product, message: "Product updated successfully" });
 };
 
-
-// Mark product as out of stock
+// @desc    Mark product as out of stock
+// @route   PUT /api/ogaglow/products/:id/out-of-stock
 export const markOutOfStock = async (req, res) => {
   const { id } = req.params;
-
   const product = await Product.findByIdAndUpdate(id, { countInStock: 0 }, { new: true });
 
-  if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+  if (!product) {
+    return res.status(404).json({ success: false, message: "Product not found" });
+  }
 
   res.json({ success: true, data: product });
 };

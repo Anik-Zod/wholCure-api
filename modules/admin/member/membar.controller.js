@@ -1,4 +1,4 @@
-import Member from "./membar.mode.js";
+import Member from "./membar.model.js";
 import cloudinary from "../../../config/cloudinary.js";
 
 // create member

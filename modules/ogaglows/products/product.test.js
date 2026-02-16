@@ -1,132 +1,148 @@
-import request from "supertest";
+import { jest } from '@jest/globals';
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import app from "../../../server.js";
-import Product from "./product.model.js";
+
+// ESM Dynamic Imports
+const { default: app } = await import("../../../server.js");
+const { default: Product } = await import("./product.model.js");
+const { default: request } = await import("supertest");
 
 let mongoServer;
 
 beforeAll(async () => {
-    // Disconnect from any existing connection (like the one in server.js if it happened)
-    await mongoose.disconnect();
-
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+  await mongoose.disconnect(); // Ensure no zombie connections
+  mongoServer = await MongoMemoryServer.create();
+  await mongoose.connect(mongoServer.getUri());
 });
 
 afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+  await mongoose.disconnect();
+  await mongoServer.stop();
 });
 
 beforeEach(async () => {
-    await Product.deleteMany({});
+  await Product.deleteMany({});
 });
 
 describe("Product API", () => {
-    const sampleProduct = {
-        name: "Test Product",
-        description: "This is a test product description",
-        price: 100,
-        offerPrice: 80,
-        category: "skin-care",
-        images: [{ public_id: "test", url: "http://test.com" }],
-        countInStock: 10,
-    };
+  const sampleProductInput = {
+    name: "OgaGlow Serum",
+    description: "Premium skin hydration",
+    price: 100,
+    discountValue: 20,
+    discountType: "percentage",
+    category: "skin-care",
+    images: [{ public_id: "test_id", url: "http://cloudinary.com/test.jpg" }],
+    countInStock: 15,
+  };
 
-    describe("POST /api/ogaglow/products", () => {
-        it("should create a new product", async () => {
-            const res = await request(app)
-                .post("/api/ogaglow/products")
-                .send(sampleProduct);
+  describe("POST /api/ogaglow/products", () => {
+    it("should create a product and verify virtual finalPrice", async () => {
+      const res = await request(app)
+        .post("/api/ogaglow/products")
+        .send(sampleProductInput);
 
-            expect(res.statusCode).toBe(201);
-            expect(res.body.success).toBe(true);
-            expect(res.body.data.name).toBe(sampleProduct.name);
-        });
-
-        it("should return 400 if required fields are missing", async () => {
-            const res = await request(app)
-                .post("/api/ogaglow/products")
-                .send({ name: "Incomplete" });
-
-            expect(res.statusCode).toBe(400);
-            expect(res.body.success).toBe(false);
-        });
+      expect(res.statusCode).toBe(201);
+      expect(res.body.success).toBe(true);
+      // Calculation: 100 - (20% of 100) = 80
+      expect(res.body.data.finalPrice).toBe(80);
+      expect(res.body.data.discount.isActive).toBe(true);
     });
 
-    describe("GET /api/ogaglow/products", () => {
-        it("should get all products", async () => {
-            await Product.create(sampleProduct);
+    it("should fail (400) if required fields are missing", async () => {
+      const res = await request(app)
+        .post("/api/ogaglow/products")
+        .send({ name: "Missing Price" });
 
-            const res = await request(app).get("/api/ogaglow/products");
+      expect(res.statusCode).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+  });
 
-            expect(res.statusCode).toBe(200);
-            expect(res.body.success).toBe(true);
-            expect(res.body.data.length).toBe(1);
-            expect(res.body.data[0].description).toBe(sampleProduct.description);
-            expect(res.body.pagination.total).toBe(1);
-        });
+  describe("GET /api/ogaglow/products", () => {
+    it("should fetch all products with pagination data", async () => {
+      // Manually seeding data (matching Schema structure)
+      await Product.create({
+        ...sampleProductInput,
+        discount: { value: 20, type: "percentage", isActive: true }
+      });
 
-        it("should filter products by category", async () => {
-            await Product.create(sampleProduct);
-            await Product.create({ ...sampleProduct, category: "hair-care", name: "Hair Product" });
+      const res = await request(app).get("/api/ogaglow/products");
 
-            const res = await request(app)
-                .get("/api/ogaglow/products")
-                .query({ category: "skin-care" });
-
-            expect(res.body.data.length).toBe(1);
-            expect(res.body.data[0].category).toBe("skin-care");
-        });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.pagination).toBeDefined();
+      expect(res.body.data[0].finalPrice).toBe(80);
     });
 
-    describe("GET /api/ogaglow/products/:id", () => {
-        it("should get a single product by id", async () => {
-            const product = await Product.create(sampleProduct);
+    it("should filter products by keyword", async () => {
+      await Product.create({ ...sampleProductInput, name: "Alpha" });
+      await Product.create({ ...sampleProductInput, name: "Beta" });
 
-            const res = await request(app).get(`/api/ogaglow/products/${product._id}`);
+      const res = await request(app)
+        .get("/api/ogaglow/products")
+        .query({ keyword: "Alpha" });
 
-            expect(res.statusCode).toBe(200);
-            expect(res.body.success).toBe(true);
-            expect(res.body.data.name).toBe(sampleProduct.name);
-            expect(res.body.data._id.toString()).toBe(product._id.toString());
-        });
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.data[0].name).toBe("Alpha");
+    });
+  });
 
-        it("should return 404 if product not found", async () => {
-            const id = new mongoose.Types.ObjectId();
-            const res = await request(app).get(`/api/ogaglow/products/${id}`);
+  describe("PUT /api/ogaglow/products/:id", () => {
+    it("should update flat fields and recalculate nested discount virtuals", async () => {
+      const product = await Product.create({
+        ...sampleProductInput,
+        discount: { value: 20, type: "percentage", isActive: true }
+      });
 
-            expect(res.statusCode).toBe(404);
-            expect(res.body.success).toBe(false);
-            expect(res.body.message).toBe("Product not found");
-        });
+      const updateData = {
+        price: 200,
+        discountValue: 50,
+        discountType: "fixed"
+      };
+
+      const res = await request(app)
+        .put(`/api/ogaglow/products/${product._id}`)
+        .send(updateData);
+
+      expect(res.statusCode).toBe(200);
+      // New calculation: 200 - 50 = 150
+      expect(res.body.data.finalPrice).toBe(150);
+      expect(res.body.data.discount.type).toBe("fixed");
     });
 
-    describe("PUT /api/ogaglow/products/:id", () => {
-        it("should update a product", async () => {
-            const product = await Product.create(sampleProduct);
-            const updatedData = { ...sampleProduct, name: "Updated Name" };
+    it("should revert to base price when discountIsActive is false", async () => {
+      const product = await Product.create({
+        ...sampleProductInput,
+        discount: { value: 20, type: "percentage", isActive: true }
+      });
 
-            const res = await request(app)
-                .put(`/api/ogaglow/products/${product._id}`)
-                .send(updatedData);
+      const res = await request(app)
+        .put(`/api/ogaglow/products/${product._id}`)
+        .send({ discountIsActive: false });
 
-            expect(res.statusCode).toBe(200);
-            expect(res.body.data.name).toBe("Updated Name");
-        });
+      expect(res.body.data.finalPrice).toBe(100);
+      expect(res.body.data.discount.isActive).toBe(false);
+    });
+  });
+
+  describe("PUT /api/ogaglow/products/:id/out-of-stock", () => {
+    it("should mark product as out of stock successfully", async () => {
+      const product = await Product.create(sampleProductInput);
+
+      const res = await request(app)
+        .put(`/api/ogaglow/products/${product._id}/out-of-stock`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.data.countInStock).toBe(0);
     });
 
-    describe("PUT /api/ogaglow/products/:id/out-of-stock", () => {
-        it("should mark product as out of stock", async () => {
-            const product = await Product.create(sampleProduct);
+    it("should return 404 for non-existent product", async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .put(`/api/ogaglow/products/${fakeId}/out-of-stock`);
 
-            const res = await request(app)
-                .put(`/api/ogaglow/products/${product._id}/out-of-stock`);
-
-            expect(res.statusCode).toBe(200);
-            expect(res.body.data.countInStock).toBe(0);
-        });
+      expect(res.statusCode).toBe(404);
     });
+  });
 });

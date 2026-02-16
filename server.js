@@ -15,6 +15,7 @@ import productRouter from "./modules/ogaglows/products/product.route.js";
 import customerRouter from "./modules/ogaglows/customers/customer.route.js";
 import contact_us_Router from "./modules/ogaglows/ogaglowContacts/contact.route.js";
 import MembarRouter from "./modules/admin/member/membar.route.js";
+import CouponRouter from "./modules/ogaglows/products/coupon/coupon.route.js";
 
 dotenv.config();
 const app = express();
@@ -68,7 +69,7 @@ app.use("/api/members", MembarRouter);
 app.use("/api/ogaglow/products", productRouter);
 app.use("/api/ogaglow/customers", customerRouter);
 app.use("/api/ogaglow/contact-us", contact_us_Router);
-
+app.use("/api/ogaglow/coupons",CouponRouter)
 
 // Health check route - only for the root path
 app.get("/api/health", (req, res) => {
@@ -94,7 +95,9 @@ app.use((err, req, res, next) => {
   const errorMessage = err.message || "Something went wrong";
 
   // Log server-side for debugging (doesn't alter response payload)
-  console.error(err);
+ if (process.env.NODE_ENV !== 'test') {
+    console.error(err);
+  }
 
   const payload = {
     success: false,

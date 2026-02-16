@@ -14,15 +14,29 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Base price (always required)
     price: {
       type: Number,
       required: [true, "Please enter product price"],
       min: [0, "Price cannot be negative"],
     },
 
-    offerPrice: {
-      type: Number,
-      min: [0, "Offer price cannot be negative"],
+    // ⭐ Structured discount system
+    discount: {
+      type: {
+        type: String,
+        enum: ["percentage", "fixed"], // percentage or fixed amount discount
+      },
+      value: {
+        type: Number,
+        min: 0,
+      },
+      startDate: Date,   // optional discount start date
+      endDate: Date,     // optional discount end date
+      isActive: {
+        type: Boolean,
+        default: false,
+      },
     },
 
     images: [
@@ -34,7 +48,7 @@ const productSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["skin-care", "hair-care"],
+      enum: ["skin-care", "hair-care"], // add more categories as needed
       required: [true, "Please select a category"],
     },
 
@@ -69,7 +83,32 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// 🔹 Virtual populate (BEFORE model)
+// 🔹 Virtual → Calculate discounted price automatically
+productSchema.virtual("finalPrice").get(function () {
+  if (!this.discount?.isActive) return this.price;
+
+  const now = new Date();
+
+  if (
+    this.discount.startDate &&
+    this.discount.endDate &&
+    (now < this.discount.startDate || now > this.discount.endDate)
+  ) {
+    return this.price;
+  }
+
+  if (this.discount.type === "percentage") {
+    return this.price - (this.price * this.discount.value) / 100;
+  }
+
+  if (this.discount.type === "fixed") {
+    return Math.max(0, this.price - this.discount.value);
+  }
+
+  return this.price;
+});
+
+// 🔹 Virtual populate (approved reviews)
 productSchema.virtual("reviews", {
   ref: "Review",
   localField: "_id",
@@ -77,9 +116,9 @@ productSchema.virtual("reviews", {
   match: { isApproved: true },
 });
 
-// Index
+// Index for faster queries
 productSchema.index({ category: 1, price: 1 });
 
-// Model (LAST)
+// Model
 const Product = mongoose.model("Product", productSchema);
 export default Product;
