@@ -7,7 +7,7 @@ const CouponRouter = express.Router();
 CouponRouter.post("/", createCoupon);
 CouponRouter.get("/", getAllCoupons);
 CouponRouter.get("/:code", getCouponByCode);
-CouponRouter.patch("/:id", updateCoupon);
+CouponRouter.put("/:id", updateCoupon);
 CouponRouter.delete("/:id", deleteCoupon);
 CouponRouter.post("/apply", applyCoupon);
 
