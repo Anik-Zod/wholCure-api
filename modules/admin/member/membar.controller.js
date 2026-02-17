@@ -4,7 +4,7 @@ import cloudinary from "../../../config/cloudinary.js";
 // create member
 export async function createMember(req, res) {
   try {
-    const { name, email, phone, address, socialMedia, description, role } =
+    let { name, email, phone, address, socialMedia, description, role } =
       req.body || {};
 
     if (!name) {
@@ -30,6 +30,24 @@ export async function createMember(req, res) {
         uploadStream.end(req.file.buffer);
       });
     }
+
+// safely convert socialMedia
+if (socialMedia) {
+  try {
+    // if string → parse
+    if (typeof socialMedia === "string") {
+      socialMedia = JSON.parse(socialMedia);
+    }
+
+    // ensure array
+    if (!Array.isArray(socialMedia)) {
+      socialMedia = [];
+    }
+  } catch (err) {
+    console.log("Invalid socialMedia:", socialMedia);
+    socialMedia = [];
+  }
+}
 
     const member = await Member.create({
       name,
