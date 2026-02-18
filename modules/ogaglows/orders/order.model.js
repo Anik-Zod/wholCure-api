@@ -1,64 +1,196 @@
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema(
+//
+//  Each item inside the order
+//
+const orderItemSchema = new mongoose.Schema(
   {
-    customerId: {
+    product: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer",
+      ref: "Product",
       required: true,
     },
 
-    // Snapshot of customer info at order time
-    customerName: { type: String, required: true, trim: true },
-    customerEmail: { type: String, required: true, lowercase: true, trim: true },
-    customerPhone: { type: String, required: true, trim: true },
-    customerCity: { type: String, trim: true },
-    customerAddress: { type: String, trim: true },
+    name: {
+      type: String,
+      required: true,
+    },
 
-    products: [
-      {
-        productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
-        name: String,
-        price: Number,
-        quantity: { type: Number, default: 1, min: 1 },
-      },
-    ],
+    image: String,
 
-    totalAmount: { type: Number, required: true, min: 0 },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
 
+    // price at purchase time (important)
+    price: {
+      type: Number,
+      required: true,
+    },
+
+    subtotal: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+
+//
+//  Customer info (guest checkout)
+//
+const customerSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+
+//
+// Shipping Address
+//
+const shippingAddressSchema = new mongoose.Schema(
+  {
+    fullName: {
+      type: String,
+      required: true,
+    },
+
+    address: {
+      type: String,
+      required: true,
+    },
+
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String,
+  },
+  { _id: false }
+);
+
+
+//
+//  MAIN ORDER SCHEMA
+//
+const orderSchema = new mongoose.Schema(
+  {
+    // customer info
+    customer: {
+      type: customerSchema,
+      required: true,
+    },
+
+    // products purchased
+    orderItems: {
+      type: [orderItemSchema],
+      required: true,
+    },
+
+    // shipping info
+    shippingAddress: {
+      type: shippingAddressSchema,
+      required: true,
+    },
+
+    //
+    // 💰 PAYMENT
+    //
     paymentMethod: {
       type: String,
-      enum: ["COD", "Online"],
-      required: true,
+      enum: ["COD","ONLINE"],
       default: "COD",
     },
 
     paymentStatus: {
       type: String,
-      enum: ["Pending", "Paid", "Failed"],
-      default: "Pending",
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
     },
 
+    //
+    // 📦 ORDER STATUS (delivery lifecycle)
+    //
     orderStatus: {
       type: String,
-      enum: ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"],
-      default: "Pending",
+      enum: [
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ],
+      default: "pending",
     },
 
-    // Optional: store transaction id if online payment
-    transactionId: { type: String },
+    //
+    // 💵 PRICE BREAKDOWN
+    //
+    itemsPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    shippingPrice: {
+      type: Number,
+      default: 0,
+    },
+
+    taxPrice: {
+      type: Number,
+      default: 0,
+    },
+
+    discountAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
+
+    //
+    // ⏱ ORDER TIMESTAMPS
+    //
+    paidAt: Date,
+    deliveredAt: Date,
+    cancelledAt: Date,
+
+    //
+    // 📝 OPTIONAL
+    //
+    notes: String, // customer message
   },
-  { timestamps: true }
+  {
+    timestamps: true, // createdAt + updatedAt
+  }
 );
 
-// Index for faster queries
-orderSchema.index({ customerId: 1 });
-orderSchema.index({ orderStatus: 1 });
-orderSchema.index({ paymentStatus: 1 });
 
-const Order = mongoose.model("Order", orderSchema);
-export default Order;
+//
+// 🚀 Useful Indexes (important for production)
+//
+orderSchema.index({ "customer.email": 1 });
+orderSchema.index({ orderStatus: 1 });
+orderSchema.index({ createdAt: -1 });
+
+export default mongoose.model("Order", orderSchema);

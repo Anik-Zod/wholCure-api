@@ -17,6 +17,7 @@ import contact_us_Router from "./modules/ogaglows/ogaglowContacts/contact.route.
 import MembarRouter from "./modules/admin/member/membar.route.js";
 import CouponRouter from "./modules/ogaglows/products/coupon/coupon.route.js";
 import ReviewRouter from "./modules/ogaglows/reviews/review.route.js";
+import OrderRoute from "./modules/ogaglows/orders/order.route.js";
 
 dotenv.config();
 const app = express();
@@ -72,6 +73,7 @@ app.use("/api/ogaglow/customers", customerRouter);
 app.use("/api/ogaglow/contact-us", contact_us_Router);
 app.use("/api/ogaglow/coupons",CouponRouter)
 app.use("/api/ogaglow/reviews", ReviewRouter);
+app.use("/api/ogaglow/orders",OrderRoute);
 
 // Health check route - only for the root path
 app.get("/api/health", (req, res) => {

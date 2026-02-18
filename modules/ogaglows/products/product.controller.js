@@ -1,5 +1,6 @@
 import Product from "./product.model.js";
 import reviewModel from "../reviews/review.model.js";
+import cloudinary from "../../../config/cloudinary.js";
 
 // @desc    Get all products with search, filter, sort, pagination
 // @route   GET /api/ogaglow/products
@@ -39,7 +40,7 @@ export const getAllProducts = async (req, res) => {
 
   const products = await Product.find(query)
     .select(
-      "name description price discount images category averageRating totalReviews countInStock"
+      "_id name description price discount images category averageRating totalReviews countInStock finalPrice howToUse ingredients benefits"
     )
     .sort(sortOption)
     .skip(skip)
@@ -80,21 +81,71 @@ export const getProductById = async (req, res) => {
 // @desc    Add new product
 // @route   POST /api/ogaglow/products
 export const addProduct = async (req, res) => {
-  const { 
-    name, description, price, discountValue, 
-    discountType, category, images, countInStock 
+  const {
+    name,
+    description,
+    price,
+    discountValue,
+    discountType,
+    discountStartDate,
+    discountEndDate,
+    category,
+    countInStock,
+    howToUse,
+    ingredients,
+    benefits,
   } = req.body;
 
-  if (!name || !description || !price || !category || countInStock === undefined) {
-    return res.status(400).json({ success: false, message: "Required fields missing" });
+  // ---------- Validation ----------
+  if (
+    !name ||
+    !description ||
+    price === undefined ||
+    !category ||
+    countInStock === undefined ||
+    !howToUse ||
+    !ingredients ||
+    !benefits
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Required fields missing",
+    });
   }
 
+  // ---------- Discount ----------
   const discount = {
     type: discountType || "percentage",
     value: discountValue || 0,
+    startDate: discountStartDate ? new Date(discountStartDate) : undefined,
+    endDate: discountEndDate ? new Date(discountEndDate) : undefined,
     isActive: discountValue > 0,
   };
 
+  // ---------- Images Upload ----------
+  let images = [];
+
+  if (req.files && req.files.length > 0) {
+    for (const file of req.files) {
+      const uploaded = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "wholcare/products", resource_type: "image" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(file.buffer);
+      });
+
+      images.push({
+        public_id: uploaded.public_id,
+        url: uploaded.secure_url,
+      });
+    }
+  }
+
+  // ---------- Create Product ----------
   const product = await Product.create({
     name,
     description,
@@ -102,10 +153,17 @@ export const addProduct = async (req, res) => {
     discount,
     category,
     images,
-    countInStock
+    countInStock,
+    howToUse,
+    ingredients,
+    benefits,
   });
 
-  res.status(201).json({ success: true, data: product, message: "Product created successfully" });
+  return res.status(201).json({
+    success: true,
+    data: product,
+    message: "Product created successfully",
+  });
 };
 
 // @desc    Update product

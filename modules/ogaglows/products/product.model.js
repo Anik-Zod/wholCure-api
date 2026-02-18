@@ -20,6 +20,21 @@ const productSchema = new mongoose.Schema(
       required: [true, "Please enter product price"],
       min: [0, "Price cannot be negative"],
     },
+    howToUse:{
+      type: String,
+      // required: [true, "Please enter instructions on how to use the product"],
+      trim: true,
+    },
+    ingredients:{
+      type: String,
+      // required: [true, "Please enter ingredients for the product"],
+      trim: true,
+    },
+    benefits:{
+      type: String,
+      // required: [true, "Please enter benefits of the product"],
+      trim: true,
+    },
 
     // ⭐ Structured discount system
     discount: {
