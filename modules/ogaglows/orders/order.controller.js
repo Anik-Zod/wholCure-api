@@ -362,3 +362,30 @@ export const placeOrder = async (req, res) => {
     });
   }
 };
+
+
+export const getAllOrders = async(req,res)=>{
+  const response = await Order.find().sort({ createdAt: -1 });
+  res.status(200).json({
+    success: true,
+    orders: response
+  });
+}
+export const getOrderById = async(req,res)=>{
+  const {id} = req.params;
+  const response = await Order.findById(id);
+  res.status(200).json({
+    success: true,
+    order: response
+  });
+}
+
+export const updateOrderStatus = async(req,res)=>{
+  const {id} = req.params;
+  const {orderStatus} = req.body;
+  const response = await Order.findByIdAndUpdate(id,{orderStatus},{new: true});
+  res.status(200).json({
+    success: true,
+    order: response
+  });
+}
