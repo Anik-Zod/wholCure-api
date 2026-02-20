@@ -52,6 +52,13 @@ app.use(
   })
 );
 
+// Middleware to fix malformed URLs with leading spaces (e.g. from client-side typos)
+app.use((req, res, next) => {
+  if (req.url.startsWith('/%20')) {
+    req.url = req.url.replace('/%20', '/');
+  }
+  next();
+});
 
 
 app.all("/api/auth/*splat", toNodeHandler(auth))
@@ -83,7 +90,7 @@ app.get("/api/health", (req, res) => {
 // 404 Handler for unmatched routes
 app.use((req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
-  res.status(404);
+  error.status = 404;
   next(error);
 });
 

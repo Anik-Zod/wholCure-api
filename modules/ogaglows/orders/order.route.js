@@ -3,7 +3,7 @@ import { checkoutPreview, placeOrder } from "./order.controller.js";
 
 const OrderRoute = express.Router();
 
-OrderRoute.get("/checkout/preview",checkoutPreview)
+OrderRoute.post("/checkout/preview",checkoutPreview)
 OrderRoute.post("/placeOrder",placeOrder)
 
 export default OrderRoute;

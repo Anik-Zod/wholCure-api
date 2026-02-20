@@ -1,6 +1,7 @@
 import Order from "./order.model.js";
 import transporter from "../../../config/mailer.js";
 import Product from "../products/product.model.js"
+import Coupon from "../products/coupon/coupon.model.js";
 
 // float rounding helper
 const round = (num) => Math.round(num * 100) / 100;
@@ -65,73 +66,62 @@ export const checkoutPreview = async (req, res) => {
     itemsPrice = round(itemsPrice);
 
     // -------------------------
-    // 3. APPLY COUPON
+    // 3. APPLY COUPON (ignore if invalid)
     // -------------------------
     let discountAmount = 0;
     let couponInfo = null;
 
     if (couponCode) {
-      const coupon = await Coupon.findOne({
-        code: couponCode.toUpperCase(),
-        isActive: true
-      });
-
-      if (!coupon) {
-        return res.status(400).json({
-          message: "Invalid coupon"
+      try {
+        const coupon = await Coupon.findOne({
+          code: couponCode.toUpperCase(),
+          isActive: true
         });
-      }
 
-      // expiry check
-      if (coupon.expiresAt && coupon.expiresAt < new Date()) {
-        return res.status(400).json({
-          message: "Coupon expired"
-        });
-      }
+        if (coupon) {
+          // expiry check
+          if (!coupon.expiresAt || coupon.expiresAt >= new Date()) {
 
-      // usage limit check
-      if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-        return res.status(400).json({
-          message: "Coupon usage limit reached"
-        });
-      }
+            // usage limit check
+            if (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) {
 
-      // minimum purchase
-      if (itemsPrice < coupon.minPurchase) {
-        return res.status(400).json({
-          message: `Minimum purchase ${coupon.minPurchase} required`
-        });
-      }
+              // minimum purchase
+              if (!coupon.minPurchase || itemsPrice >= coupon.minPurchase) {
 
-      // product-specific coupon
-      if (coupon.applicableProducts?.length) {
-        const valid = validatedItems.some(item =>
-          coupon.applicableProducts.some(id => id.equals(item.product))
-        );
+                // product-specific coupon
+                let applicable = true;
+                if (coupon.applicableProducts?.length) {
+                  applicable = validatedItems.some(item =>
+                    coupon.applicableProducts.some(id => id.equals(item.product))
+                  );
+                }
 
-        if (!valid) {
-          return res.status(400).json({
-            message: "Coupon not applicable to selected products"
-          });
+                if (applicable) {
+                  // calculate discount
+                  if (coupon.discountType === "percentage") {
+                    discountAmount = round((itemsPrice * coupon.value) / 100);
+                  } else {
+                    discountAmount = coupon.value;
+                  }
+                  // prevent over-discount
+                  discountAmount = Math.min(discountAmount, itemsPrice);
+
+                  couponInfo = {
+                    code: coupon.code,
+                    discountType: coupon.discountType,
+                    value: coupon.value,
+                    discountAmount
+                  };
+                }
+              }
+            }
+          }
         }
+      } catch (err) {
+        console.warn("Coupon check failed, ignoring coupon:", err.message);
+        discountAmount = 0;
+        couponInfo = null;
       }
-
-      // calculate discount
-      if (coupon.discountType === "percentage") {
-        discountAmount = round((itemsPrice * coupon.value) / 100);
-      } else {
-        discountAmount = coupon.value;
-      }
-
-      // prevent over-discount
-      discountAmount = Math.min(discountAmount, itemsPrice);
-
-      couponInfo = {
-        code: coupon.code,
-        discountType: coupon.discountType,
-        value: coupon.value,
-        discountAmount
-      };
     }
 
     // -------------------------
@@ -171,7 +161,6 @@ export const checkoutPreview = async (req, res) => {
     });
   }
 };
-
 
 // Place Order 
 export const placeOrder = async (req, res) => {
