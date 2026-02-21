@@ -1,4 +1,4 @@
-import Customer from "./customer.model.js";
+ import Customer from "./customer.model.js";
 
 
 //create customer
