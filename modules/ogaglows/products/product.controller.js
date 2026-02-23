@@ -27,7 +27,7 @@ export const getAllProducts = async (req, res) => {
   }
 
   // Multi-field sort
-  let sortOption = { createdAt: -1 }; 
+  let sortOption = { createdAt: -1 };
   if (sort) {
     sortOption = {};
     sort.split(",").forEach((s) => {
@@ -89,6 +89,7 @@ export const addProduct = async (req, res) => {
     discountType,
     discountStartDate,
     discountEndDate,
+    discountIsActive,
     category,
     countInStock,
     howToUse,
@@ -116,10 +117,10 @@ export const addProduct = async (req, res) => {
   // ---------- Discount ----------
   const discount = {
     type: discountType || "percentage",
-    value: discountValue || 0,
+    value: Number(discountValue) || 0,
     startDate: discountStartDate ? new Date(discountStartDate) : undefined,
     endDate: discountEndDate ? new Date(discountEndDate) : undefined,
-    isActive: discountValue > 0,
+    isActive: discountIsActive === "true" || discountIsActive === true || Number(discountValue) > 0,
   };
 
   // ---------- Images Upload ----------
@@ -149,11 +150,11 @@ export const addProduct = async (req, res) => {
   const product = await Product.create({
     name,
     description,
-    price,
+    price: Number(price),
     discount,
     category,
     images,
-    countInStock,
+    countInStock: Number(countInStock),
     howToUse,
     ingredients,
     benefits,
@@ -169,31 +170,120 @@ export const addProduct = async (req, res) => {
 // @desc    Update product
 // @route   PUT /api/ogaglow/products/:id
 export const updateProduct = async (req, res) => {
-  const { id } = req.params;
-  const { 
-    name, description, price, discountValue, 
-    discountType, discountIsActive, category, images, countInStock 
-  } = req.body;
+  try {
+    const { id } = req.params;
+    console.log("Updating product ID:", id);
+    console.log("Request Body:", req.body);
+    console.log("Files:", req.files ? req.files.length : 0);
 
-  const product = await Product.findById(id);
-  if (!product) {
-    return res.status(404).json({ success: false, message: "Product not found" });
+    const {
+      name, description, price, discountValue,
+      discountType, discountIsActive, discountStartDate, discountEndDate,
+      category, countInStock, howToUse, ingredients, benefits,
+      existingImages
+    } = req.body;
+
+    let { removedImages } = req.body;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    // Initialize discount if it doesn't exist
+    if (!product.discount) {
+      product.discount = { type: "percentage", value: 0, isActive: false };
+    }
+
+    // Update nested discount fields
+    if (discountValue !== undefined) product.discount.value = Number(discountValue) || 0;
+    if (discountType !== undefined) product.discount.type = discountType;
+    if (discountIsActive !== undefined) {
+      product.discount.isActive = discountIsActive === "true" || discountIsActive === true;
+    }
+    if (discountStartDate !== undefined) {
+      product.discount.startDate = discountStartDate ? new Date(discountStartDate) : undefined;
+    }
+    if (discountEndDate !== undefined) {
+      product.discount.endDate = discountEndDate ? new Date(discountEndDate) : undefined;
+    }
+
+    // ---------- Images Handling ----------
+    let updatedImages = [];
+
+    // 1. Keep existing images
+    if (existingImages) {
+      try {
+        updatedImages = JSON.parse(existingImages);
+      } catch (error) {
+        console.error("Error parsing existingImages:", error);
+      }
+    }
+
+    // 2. Upload new images if any
+    if (req.files && req.files.length > 0) {
+      console.log("Uploading new images to Cloudinary...");
+      for (const file of req.files) {
+        const uploaded = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "wholcare/products", resource_type: "image" },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(file.buffer);
+        });
+
+        updatedImages.push({
+          public_id: uploaded.public_id,
+          url: uploaded.secure_url,
+        });
+      }
+    }
+
+    // 3. Delete removed images from Cloudinary
+    if (removedImages) {
+      console.log("Removing images from Cloudinary:", removedImages);
+      const imagesToDelete = Array.isArray(removedImages) ? removedImages : [removedImages];
+      for (const publicId of imagesToDelete) {
+        try {
+          await cloudinary.uploader.destroy(publicId);
+        } catch (error) {
+          console.error("Cloudinary Delete Error:", error);
+        }
+      }
+    }
+
+    product.images = updatedImages;
+
+    // ---------- Update top-level fields ----------
+    const updateData = { name, description, price, category, countInStock, howToUse, ingredients, benefits };
+    Object.keys(updateData).forEach((key) => {
+      if (updateData[key] !== undefined) {
+        if (["price", "countInStock"].includes(key)) {
+          product[key] = Number(updateData[key]) || 0;
+        } else {
+          product[key] = updateData[key];
+        }
+      }
+    });
+
+    console.log("Saving product...");
+    await product.save();
+
+    res.json({
+      success: true,
+      data: product,
+      message: "Product updated successfully",
+    });
+  } catch (error) {
+    console.error("Update Product Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update product",
+    });
   }
-
-  // Update nested discount fields
-  if (discountValue !== undefined) product.discount.value = discountValue;
-  if (discountType !== undefined) product.discount.type = discountType;
-  if (discountIsActive !== undefined) product.discount.isActive = discountIsActive;
-
-  // Update top-level fields
-  const updateData = { name, description, price, category, images, countInStock };
-  Object.keys(updateData).forEach(key => {
-    if (updateData[key] !== undefined) product[key] = updateData[key];
-  });
-
-  await product.save();
-
-  res.json({ success: true, data: product, message: "Product updated successfully" });
 };
 
 // @desc    Mark product as out of stock

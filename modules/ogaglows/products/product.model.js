@@ -20,17 +20,17 @@ const productSchema = new mongoose.Schema(
       required: [true, "Please enter product price"],
       min: [0, "Price cannot be negative"],
     },
-    howToUse:{
+    howToUse: {
       type: String,
       // required: [true, "Please enter instructions on how to use the product"],
       trim: true,
     },
-    ingredients:{
+    ingredients: {
       type: String,
       // required: [true, "Please enter ingredients for the product"],
       trim: true,
     },
-    benefits:{
+    benefits: {
       type: String,
       // required: [true, "Please enter benefits of the product"],
       trim: true,
@@ -63,7 +63,7 @@ const productSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["skin-care", "hair-care"], // add more categories as needed
+      enum: ["skin-care", "hair-care", "body-care"], // add more categories as needed
       required: [true, "Please select a category"],
     },
 
