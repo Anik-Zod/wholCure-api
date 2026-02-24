@@ -27,6 +27,7 @@ describe("Contact-us Api", () => {
     const sampleMessage = {
         name: "anik",
         email: "anikdas169@gmail.com",
+        subject: "Demo Subject", // Added subject field
         message: "Hi this is demo message from contact_us form"
     };
 
@@ -44,7 +45,7 @@ describe("Contact-us Api", () => {
         it("Should not Save if all fields are not present", async () => {
             const res = await request(app)
                 .post("/api/ogaglow/contact-us/")
-                .send({ name: "Anik" });
+                .send({ name: "Anik", email: "anikdas169@gmail.com" }); // Missing subject and message
 
             expect(res.status).toBe(400);
             expect(res.body.success).toBe(false);

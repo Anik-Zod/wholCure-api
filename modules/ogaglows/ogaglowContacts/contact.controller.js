@@ -2,12 +2,12 @@ import Contact from "./contact.model.js";
 
 // save contact_us form
 export const saveContactForm = async (req, res) => {
-    const { name, email, message } = req.body || {};
-    if (!name || !email || !message) {
+    const { name, email, message,subject } = req.body || {};
+    if (!name || !email || !message || !subject) {
         return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    const contact = await Contact.create({ name, email, message });
+    const contact = await Contact.create({ name, email, message, subject });
 
     if (!contact) {
         return res.status(500).json({ success: false, message: "Failed to save contact form" });

@@ -14,6 +14,11 @@ const contactSchema = new mongoose.Schema(
             lowercase: true,
             trim: true,
         },
+        subject: {
+            type: String,
+            required: [true, "Please enter subject"],
+            trim: true,
+        },
 
         message: {
             type: String,
