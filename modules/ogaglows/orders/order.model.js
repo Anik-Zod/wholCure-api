@@ -25,9 +25,22 @@ const orderItemSchema = new mongoose.Schema(
     },
 
     // price at purchase time (important)
+    // we keep `price` as the final (post-discount) unit price
     price: {
       type: Number,
       required: true,
+    },
+
+    // base price before any product-level discount (for auditing/UI)
+    originalPrice: {
+      type: Number,
+      default: null,
+    },
+
+    // how much was deducted for this line (originalPrice-price) * quantity
+    discountAmount: {
+      type: Number,
+      default: 0,
     },
 
     subtotal: {

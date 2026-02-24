@@ -18,6 +18,7 @@ import MembarRouter from "./modules/admin/member/membar.route.js";
 import CouponRouter from "./modules/ogaglows/products/coupon/coupon.route.js";
 import ReviewRouter from "./modules/ogaglows/reviews/review.route.js";
 import OrderRoute from "./modules/ogaglows/orders/order.route.js";
+import ShippingRoute from "./modules/ogaglows/orders/shipping.route.js";
 
 dotenv.config();
 const app = express();
@@ -81,6 +82,7 @@ app.use("/api/ogaglow/contact-us", contact_us_Router);
 app.use("/api/ogaglow/coupons",CouponRouter)
 app.use("/api/ogaglow/reviews", ReviewRouter);
 app.use("/api/ogaglow/orders",OrderRoute);
+app.use("/api/ogaglow/shipping", ShippingRoute);
 
 // Health check route - only for the root path
 app.get("/api/health", (req, res) => {
@@ -133,7 +135,10 @@ const port = process.env.PORT || 8800;
 
 const startServer = async () => {
   try {
-    await connectDB();
+    // when running tests we manage the connection manually via in-memory server
+    if (process.env.NODE_ENV !== 'test') {
+      await connectDB();
+    }
     if (process.env.NODE_ENV !== 'test') {
       app.listen(port, () => {
         console.log(`🚀 Server is running at http://localhost:${port}`);

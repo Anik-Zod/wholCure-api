@@ -3,6 +3,7 @@ import Product from "../../products/product.model.js";
 import Customer from "../../customers/customer.model.js"
 import { calculateCartItems } from "./pricing.service.js";
 import { applyCoupon }  from "./coupon.service.js"
+import { fetchShippingCost } from "../shipping.service.js";
 import transporter from "../../../../config/mailer.js"
 import { round } from "../../../../lib/round.js";
 
@@ -15,18 +16,24 @@ export const placeOrderService = async (data) => {
     shippingAddress,
     paymentMethod = "COD",
     couponCode,
-    shippingPrice = 0,
+    shippingPrice,
     taxPrice = 0,
     notes = "",
   } = data;
+
+  // default shipping cost if not passed
+  let appliedShipping = shippingPrice;
+  if (appliedShipping == null) {
+    appliedShipping = await fetchShippingCost();
+  }
 
   // Validation
   if (!customer || !orderItems?.length || !shippingAddress) {
     throw new Error("Missing required fields");
   }
 
-  // 1. Calculate items
-  const { validatedItems, itemsPrice } = await calculateCartItems(orderItems);
+  // 1. Calculate items (including product-level discounts)
+  const { validatedItems, itemsPrice, totalDiscount } = await calculateCartItems(orderItems);
 
   // 2. Apply coupon
   const { discountAmount, couponInfo } = await applyCoupon(
@@ -36,7 +43,7 @@ export const placeOrderService = async (data) => {
   );
 
   // 3. Calculate total
-  const totalPrice = round(itemsPrice + shippingPrice + taxPrice - discountAmount);
+  const totalPrice = round(itemsPrice + appliedShipping + taxPrice - discountAmount);
   if (totalPrice < 0) throw new Error("Invalid total price");
 
   // 4. Create order
@@ -48,12 +55,14 @@ export const placeOrderService = async (data) => {
     paymentStatus: paymentMethod === "ONLINE" ? "pending" : "pending",
     orderStatus: "pending",
     itemsPrice,
-    shippingPrice,
+    shippingPrice: appliedShipping,
     taxPrice,
     discountAmount,
     totalPrice,
     notes,
     paidAt: null,
+    // store product-level discount separately if needed (not currently in schema)
+    // productDiscount: totalDiscount, // uncomment if added to order model
   });
 
   // 5. Create customer in DB
