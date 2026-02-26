@@ -19,6 +19,7 @@ import CouponRouter from "./modules/ogaglows/products/coupon/coupon.route.js";
 import ReviewRouter from "./modules/ogaglows/reviews/review.route.js";
 import OrderRoute from "./modules/ogaglows/orders/order.route.js";
 import ShippingRoute from "./modules/ogaglows/orders/shipping.route.js";
+import AboutUsRouter from "./modules/ogaglows/ogaglowAdmin/about-us.route.js";
 
 dotenv.config();
 const app = express();
@@ -83,7 +84,7 @@ app.use("/api/ogaglow/coupons",CouponRouter)
 app.use("/api/ogaglow/reviews", ReviewRouter);
 app.use("/api/ogaglow/orders",OrderRoute);
 app.use("/api/ogaglow/shipping", ShippingRoute);
-
+app.use("/api/ogaglow/about-us",AboutUsRouter)
 // Health check route - only for the root path
 app.get("/api/health", (req, res) => {
   res.json({ message: "API is healthy and running..." });
