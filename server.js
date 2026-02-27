@@ -20,6 +20,7 @@ import ReviewRouter from "./modules/ogaglows/reviews/review.route.js";
 import OrderRoute from "./modules/ogaglows/orders/order.route.js";
 import ShippingRoute from "./modules/ogaglows/orders/shipping.route.js";
 import AboutUsRouter from "./modules/ogaglows/ogaglowAdmin/about-us.route.js";
+import uploadRouter from "./modules/upload/upload.route.js";
 
 dotenv.config();
 const app = express();
@@ -45,7 +46,7 @@ const limiter = rateLimit({
 // app.use(limiter);
 
 // CORS Middleware (before any route)
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL, process.env.OGAGLOW_URL, process.env.OGAGLOW_ADMIN_URL].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL, process.env.OGAGLOW_URL, process.env.OGAGLOW_ADMIN_URL, process.env.OGAGLOW_URL_LOCAL].filter(Boolean);
 app.use(
   cors({
     origin: allowedOrigins.length ? allowedOrigins : false,
@@ -80,11 +81,12 @@ app.use("/api/members", MembarRouter);
 app.use("/api/ogaglow/products", productRouter);
 app.use("/api/ogaglow/customers", customerRouter);
 app.use("/api/ogaglow/contact-us", contact_us_Router);
-app.use("/api/ogaglow/coupons",CouponRouter)
+app.use("/api/ogaglow/coupons", CouponRouter)
 app.use("/api/ogaglow/reviews", ReviewRouter);
-app.use("/api/ogaglow/orders",OrderRoute);
+app.use("/api/ogaglow/orders", OrderRoute);
 app.use("/api/ogaglow/shipping", ShippingRoute);
-app.use("/api/ogaglow/about-us",AboutUsRouter)
+app.use("/api/ogaglow/about-us", AboutUsRouter)
+app.use("/api/upload", uploadRouter);
 // Health check route - only for the root path
 app.get("/api/health", (req, res) => {
   res.json({ message: "API is healthy and running..." });
@@ -109,7 +111,7 @@ app.use((err, req, res, next) => {
   const errorMessage = err.message || "Something went wrong";
 
   // Log server-side for debugging (doesn't alter response payload)
- if (process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV !== 'test') {
     console.error(err);
   }
 
