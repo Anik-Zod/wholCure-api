@@ -24,8 +24,6 @@ const orderItemSchema = new mongoose.Schema(
       min: 1,
     },
 
-    // price at purchase time (important)
-    // we keep `price` as the final (post-discount) unit price
     price: {
       type: Number,
       required: true,
@@ -102,7 +100,15 @@ const shippingAddressSchema = new mongoose.Schema(
 //
 const orderSchema = new mongoose.Schema(
   {
-    // customer info
+    // user reference (Better-Auth user ID)
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // This should match the collection name created by better-auth if possible, or just String if it's not a mongoose model better-auth uses. 
+      // Better-auth uses its own adapter. Usually it creates a 'user' collection.
+      required: true,
+    },
+
+    // customer info (snapshot for this order)
     customer: {
       type: customerSchema,
       required: true,
@@ -125,7 +131,7 @@ const orderSchema = new mongoose.Schema(
     //
     paymentMethod: {
       type: String,
-      enum: ["COD","ONLINE"],
+      enum: ["COD", "ONLINE"],
       default: "COD",
     },
 

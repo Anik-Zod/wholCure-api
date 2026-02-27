@@ -1,16 +1,16 @@
 import Order from "../order.model.js";
 import Product from "../../products/product.model.js";
-import Customer from "../../customers/customer.model.js"
+import mongoose from "mongoose";
 import { calculateCartItems } from "./pricing.service.js";
-import { applyCoupon }  from "./coupon.service.js"
+import { applyCoupon } from "./coupon.service.js"
 import { fetchShippingCost } from "../shipping.service.js";
 import transporter from "../../../../config/mailer.js"
 import { round } from "../../../../lib/round.js";
 
 
-
 export const placeOrderService = async (data) => {
   const {
+    userId,
     customer,
     orderItems,
     shippingAddress,
@@ -28,8 +28,8 @@ export const placeOrderService = async (data) => {
   }
 
   // Validation
-  if (!customer || !orderItems?.length || !shippingAddress) {
-    throw new Error("Missing required fields");
+  if (!customer || !orderItems?.length || !shippingAddress || !userId) {
+    throw new Error("Missing required fields or user not authenticated");
   }
 
   // 1. Calculate items (including product-level discounts)
@@ -48,6 +48,7 @@ export const placeOrderService = async (data) => {
 
   // 4. Create order
   const newOrder = await Order.create({
+    user: userId,
     customer,
     orderItems: validatedItems,
     shippingAddress,
@@ -61,18 +62,21 @@ export const placeOrderService = async (data) => {
     totalPrice,
     notes,
     paidAt: null,
-    // store product-level discount separately if needed (not currently in schema)
-    // productDiscount: totalDiscount, // uncomment if added to order model
   });
 
-  // 5. Create customer in DB
-  const customerData = await Customer.create({
-    name: customer.name,
-    email: customer.email,
-    phone: customer.phone,
-    city: shippingAddress.city,
-    address: shippingAddress.address,
-  });
+  // 5. Update User profile with latest address/phone info
+  // We use the raw DB collection since Better-Auth handles the 'user' schema
+  await mongoose.connection.db.collection("user").updateOne(
+    { _id: userId },
+    {
+      $set: {
+        name: customer.name,
+        phoneNumber: customer.phone,
+        address: shippingAddress.address,
+        city: shippingAddress.city,
+      },
+    }
+  );
 
   // 6. Reduce stock
   for (const item of validatedItems) {

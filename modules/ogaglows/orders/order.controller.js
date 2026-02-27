@@ -8,8 +8,8 @@ const round = (num) => Math.round(num * 100) / 100;
 
 // price calculation 
 export const checkoutPreview = async (req, res) => {
-  const result = await checkoutPreviewService(req.body);
-  
+  const result = await checkoutPreviewService({ ...req.body, userId: req.user.id });
+
   res.status(200).json({
     success: true,
     ...result
@@ -18,7 +18,7 @@ export const checkoutPreview = async (req, res) => {
 
 // Place Order 
 export const placeOrder = async (req, res, next) => {
-  const result = await placeOrderService(req.body);
+  const result = await placeOrderService({ ...req.body, userId: req.user.id });
 
   res.status(201).json({
     success: true,
@@ -27,15 +27,15 @@ export const placeOrder = async (req, res, next) => {
   });
 };
 
-export const getAllOrders = async(req,res)=>{
+export const getAllOrders = async (req, res) => {
   const response = await Order.find().sort({ createdAt: -1 });
   res.status(200).json({
     success: true,
     orders: response
   });
 }
-export const getOrderById = async(req,res)=>{
-  const {id} = req.params;
+export const getOrderById = async (req, res) => {
+  const { id } = req.params;
   const response = await Order.findById(id);
   res.status(200).json({
     success: true,
@@ -43,10 +43,18 @@ export const getOrderById = async(req,res)=>{
   });
 }
 
-export const updateOrderStatus = async(req,res)=>{
-  const {id} = req.params;
-  const {orderStatus} = req.body;
-  const response = await Order.findByIdAndUpdate(id,{orderStatus},{new: true});
+export const getMyOrders = async (req, res) => {
+  const response = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+  res.status(200).json({
+    success: true,
+    orders: response
+  });
+}
+
+export const updateOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { orderStatus } = req.body;
+  const response = await Order.findByIdAndUpdate(id, { orderStatus }, { new: true });
   res.status(200).json({
     success: true,
     order: response

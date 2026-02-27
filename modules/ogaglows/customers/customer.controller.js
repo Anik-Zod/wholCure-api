@@ -1,30 +1,23 @@
- import Customer from "./customer.model.js";
+import mongoose from "mongoose";
 
+// get all customer list (now from the user collection)
+export const getAllCustomers = async (req, res) => {
+    const users = await mongoose.connection.db.collection("user").find({}).toArray();
 
-//create customer
-export const createCustomer = async (req, res) => {
-    const { name, email, phone, city, address } = req.body || {};
-    if (!name || !email || !city || !address || !phone) {
-        return res.status(400).json({ success: false, message: "All fields are required" });
+    if (!users) {
+        return res.status(500).json({ success: false, message: "Failed to get user list" });
     }
 
-    const customer = await Customer.create({ name, email, phone, city, address });
-
-    if (!customer) {
-        return res.status(500).json({ success: false, message: "Failed to create customer" });
-    }
-
-    return res.status(201).json({ success: true, data: customer });
+    return res.status(200).json({ success: true, data: users });
 }
 
+// Get own profile (from the user collection)
+export const getMyProfile = async (req, res) => {
+    const user = await mongoose.connection.db.collection("user").findOne({ _id: req.user.id });
 
-//get all customer list
-export const getAllCustomers = async (req, res) => {
-    const customers = await Customer.find();
-
-    if (!customers) {
-        return res.status(500).json({ success: false, message: "Failed to get customer list" });
+    if (!user) {
+        return res.status(404).json({ success: false, message: "User profile not found" });
     }
 
-    return res.status(200).json({ success: true, data: customers });
+    return res.status(200).json({ success: true, data: user });
 }
