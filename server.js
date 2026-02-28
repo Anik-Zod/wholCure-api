@@ -129,10 +129,8 @@ app.use((err, req, res, next) => {
 });
 
 
-// If running behind a proxy/load balancer, trust first proxy so secure cookies work
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-}
+// If running behind a proxy/load balancer (like Vercel), trust first proxy so secure cookies and protocol detection work
+app.set('trust proxy', 1);
 
 const port = process.env.PORT || 8800;
 
