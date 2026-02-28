@@ -25,6 +25,9 @@ import uploadRouter from "./modules/upload/upload.route.js";
 dotenv.config();
 const app = express();
 
+// If running behind a proxy/load balancer (like Vercel), trust first proxy so secure cookies and protocol detection work
+app.set('trust proxy', 1);
+
 // Basic env validation (fail-fast or warn when critical values are missing)
 const requiredEnvs = ["MONGO_URI", "FRONTEND_URL", "ADMIN_URL", "FRONTEND_URL_LOCAL", "ADMIN_URL_LOCAL"];
 const missing = requiredEnvs.filter((k) => !process.env[k]);
@@ -129,8 +132,7 @@ app.use((err, req, res, next) => {
 });
 
 
-// If running behind a proxy/load balancer (like Vercel), trust first proxy so secure cookies and protocol detection work
-app.set('trust proxy', 1);
+// ... deleted from here
 
 const port = process.env.PORT || 8800;
 
