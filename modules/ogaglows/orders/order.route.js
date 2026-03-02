@@ -4,7 +4,7 @@ import { isAuthenticated } from "../../../middleware/authMiddleware.js";
 
 const OrderRoute = express.Router();
 
-OrderRoute.post("/checkout/preview", isAuthenticated, checkoutPreview)
+OrderRoute.post("/checkout/preview", checkoutPreview)
 OrderRoute.post("/placeOrder", isAuthenticated, placeOrder)
 OrderRoute.get("/getAllOrders", isAuthenticated, getAllOrders)
 OrderRoute.get("/getOrderById/:id", getOrderById)

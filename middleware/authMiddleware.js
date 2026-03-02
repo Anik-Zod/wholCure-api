@@ -8,7 +8,7 @@ export const isAuthenticated = async (req, res, next) => {
     if (!session) {
         return res.status(401).json({
             success: false,
-            message: "Authentication required. Please login first.",
+            message: "Please login first.",
         });
     }
 
