@@ -52,7 +52,22 @@ const limiter = rateLimit({
 const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL, process.env.OGAGLOW_URL, process.env.OGAGLOW_ADMIN_URL, process.env.OGAGLOW_URL_LOCAL].filter(Boolean);
 app.use(
   cors({
-    origin: allowedOrigins.length ? allowedOrigins : false,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+
+      if (process.env.NODE_ENV !== "production") {
+        try {
+          const hostname = new URL(origin).hostname;
+          if (hostname === "localhost" || hostname.startsWith("192.168.") || hostname.startsWith("10.") || hostname.startsWith("172.")) {
+            return callback(null, true);
+          }
+        } catch (e) {
+          // invalid url
+        }
+      }
+      return callback(null, false);
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })
@@ -66,6 +81,20 @@ app.use((req, res, next) => {
   next();
 });
 
+
+// Middleware to mask origin for better-auth when testing locally from other devices
+app.use("/api/auth", (req, res, next) => {
+  if (process.env.NODE_ENV !== "production" && req.headers.origin) {
+    try {
+      const hostname = new URL(req.headers.origin).hostname;
+      if (hostname.startsWith("192.168.") || hostname.startsWith("10.") || hostname.startsWith("172.")) {
+        // Mask the origin to localhost so better-auth accepts it as trusted
+        req.headers.origin = process.env.OGAGLOW_URL_LOCAL || "http://localhost:3000";
+      }
+    } catch (e) { }
+  }
+  next();
+});
 
 app.all("/api/auth/*splat", toNodeHandler(auth))
 
@@ -104,7 +133,7 @@ app.use((req, res, next) => {
 
 // Global error handler (do not leak stack in production)
 app.use((err, req, res, next) => {
-  +  // Handle Mongoose validation errors specifically to return a 400 status.
+  // Handle Mongoose validation errors specifically to return a 400 status.
   // This keeps controller logic cleaner.
   if (err.name === 'ValidationError') {
     err.status = 400;
