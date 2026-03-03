@@ -4,7 +4,7 @@ import cloudinary from "../../../config/cloudinary.js";
 // upload image helper
 const uploadImage = async (file) => {
   if (!file || !file.buffer) return null;
-
+    
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: "aboutUs", resource_type: "image" },
