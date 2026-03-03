@@ -20,7 +20,8 @@ import ReviewRouter from "./modules/ogaglows/reviews/review.route.js";
 import OrderRoute from "./modules/ogaglows/orders/order.route.js";
 import ShippingRoute from "./modules/ogaglows/orders/shipping.route.js";
 import AboutUsRouter from "./modules/ogaglows/ogaglowAdmin/about-us.route.js";
-import ShippingPriceRouter from "./modules/ogaglows/ogaglowAdmin/shipping-price.route.js";
+import ShippingCostRouter from "./modules/ogaglows/ogaglowAdmin/shipping-price.route.js";
+import HotDealRouter from "./modules/ogaglows/ogaglowAdmin/hot-deal.route.js";
 import uploadRouter from "./modules/upload/upload.route.js";
 
 dotenv.config();
@@ -119,7 +120,8 @@ app.use("/api/ogaglow/reviews", ReviewRouter);
 app.use("/api/ogaglow/orders", OrderRoute);
 app.use("/api/ogaglow/shipping", ShippingRoute);
 app.use("/api/ogaglow/about-us", AboutUsRouter);
-app.use("/api/ogaglow/shipping-price", ShippingPriceRouter);
+app.use("/api/ogaglow/shipping-price", ShippingCostRouter);
+app.use("/api/ogaglow/hot-deals", HotDealRouter);
 app.use("/api/upload", uploadRouter);
 // Health check route - only for the root path
 app.get("/api/health", (req, res) => {

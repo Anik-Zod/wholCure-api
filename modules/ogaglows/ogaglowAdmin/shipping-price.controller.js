@@ -1,18 +1,20 @@
-import ShippingPriceModel from "./shipping-price.model.js";
+import ShippingCostModel from "./shipping-price.model.js";
 
-// GET shipping price
-export const getShippingPrice = async (req, res) => {
+// GET shipping cost
+export const getShippingCost = async (req, res) => {
   try {
-    let shippingPrice = await ShippingPriceModel.findOne();
+    let shippingCost = await ShippingCostModel.findOne();
 
-    // If no record exists, create one with default price
-    if (!shippingPrice) {
-      shippingPrice = await ShippingPriceModel.create({ price: 0 });
+    // If no record exists, create one with default value
+    if (!shippingCost) {
+      shippingCost = await ShippingCostModel.create({
+        value: 0,
+      });
     }
 
-    res.json(shippingPrice);
+    res.json(shippingCost);
   } catch (error) {
-    console.error("Get shipping price error:", error);
+    console.error("Get shipping cost error:", error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -21,40 +23,43 @@ export const getShippingPrice = async (req, res) => {
   }
 };
 
-// CREATE / UPDATE shipping price
-export const createOrUpdateShippingPrice = async (req, res) => {
+// CREATE / UPDATE shipping cost
+export const createOrUpdateShippingCost = async (req, res) => {
   try {
-    const { price } = req.body;
+    const { value } = req.body;
 
-    // Validate price
-    if (price === undefined || price === null) {
+    // Validate value
+    if (value === undefined || value === null) {
       return res.status(400).json({
         success: false,
-        message: "Price is required"
+        message: "Value is required"
       });
     }
 
-    if (isNaN(price) || price < 0) {
+    if (isNaN(value) || value < 0) {
       return res.status(400).json({
         success: false,
-        message: "Price must be a non-negative number"
+        message: "Value must be a non-negative number"
       });
     }
 
-    let shippingPrice = await ShippingPriceModel.findOne();
+    // findOneAndUpdate with upsert ensures atomic update or create
+    const shippingCost = await ShippingCostModel.findOneAndUpdate(
+      {},
+      { 
+        value,
+        timestamp: new Date()
+      },
+      { 
+        new: true, // Return updated document
+        upsert: true, // Create if doesn't exist
+        setDefaultsOnInsert: true
+      }
+    );
 
-    if (shippingPrice) {
-      // Update existing record
-      shippingPrice.price = price;
-      await shippingPrice.save();
-    } else {
-      // Create new record
-      shippingPrice = await ShippingPriceModel.create({ price });
-    }
-
-    res.json(shippingPrice);
+    res.json(shippingCost);
   } catch (error) {
-    console.error("Create/Update shipping price error:", error);
+    console.error("Create/Update shipping cost error:", error);
     res.status(500).json({
       success: false,
       message: error.message,

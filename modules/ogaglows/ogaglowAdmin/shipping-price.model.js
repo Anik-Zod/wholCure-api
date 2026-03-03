@@ -1,17 +1,28 @@
 import mongoose, { Schema } from 'mongoose';
 
-const shippingPriceSchema = new Schema(
+const shippingCostSchema = new Schema(
   {
-    price: {
+    value: {
       type: Number,
       required: true,
       default: 0,
-      min: [0, 'Shipping price cannot be negative'],
+      min: [0, 'Shipping cost cannot be negative'],
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
     },
   },
-  { timestamps: true }
+  { collection: 'shippingcosts' }
 );
 
-const ShippingPriceModel = mongoose.model('ShippingPrice', shippingPriceSchema);
+// create virtual `id` field mapped to _id
+shippingCostSchema.virtual('id').get(function () {
+  return this._id.toString();
+});
+shippingCostSchema.set('toJSON', { virtuals: true });
+shippingCostSchema.set('toObject', { virtuals: true });
 
-export default ShippingPriceModel;
+const ShippingCostModel = mongoose.models.ShippingCost || mongoose.model('ShippingCost', shippingCostSchema);
+
+export default ShippingCostModel;

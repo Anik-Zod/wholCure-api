@@ -1,12 +1,12 @@
 import express from "express";
-import { getShippingPrice, createOrUpdateShippingPrice } from "./shipping-price.controller.js";
+import { getShippingCost, createOrUpdateShippingCost } from "./shipping-price.controller.js";
 
-const ShippingPriceRouter = express.Router();
+const ShippingCostRouter = express.Router();
 
-// Get current shipping price
-ShippingPriceRouter.get("/", getShippingPrice);
+// Get current shipping cost
+ShippingCostRouter.get("/", getShippingCost);
 
-// Create or update shipping price
-ShippingPriceRouter.post("/", createOrUpdateShippingPrice);
+// Create or update shipping cost
+ShippingCostRouter.post("/", createOrUpdateShippingCost);
 
-export default ShippingPriceRouter;
+export default ShippingCostRouter;
