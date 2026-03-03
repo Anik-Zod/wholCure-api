@@ -100,12 +100,12 @@ const shippingAddressSchema = new mongoose.Schema(
 //
 const orderSchema = new mongoose.Schema(
   {
-    // user reference (Better-Auth user ID)
+    // user reference (Better-Auth user ID) — null for guest checkouts
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // This should match the collection name created by better-auth if possible, or just String if it's not a mongoose model better-auth uses. 
-      // Better-auth uses its own adapter. Usually it creates a 'user' collection.
-      required: true,
+      ref: "User",
+      required: false,
+      default: null,
     },
 
     // customer info (snapshot for this order)
@@ -208,6 +208,7 @@ const orderSchema = new mongoose.Schema(
 //
 // 🚀 Useful Indexes (important for production)
 //
+orderSchema.index({ user: 1 });
 orderSchema.index({ "customer.email": 1 });
 orderSchema.index({ orderStatus: 1 });
 orderSchema.index({ createdAt: -1 });

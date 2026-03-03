@@ -27,9 +27,9 @@ export const placeOrderService = async (data) => {
     appliedShipping = await fetchShippingCost();
   }
 
-  // Validation
-  if (!customer || !orderItems?.length || !shippingAddress || !userId) {
-    throw new Error("Missing required fields or user not authenticated");
+  // Validation — userId is optional (guest checkout allowed)
+  if (!customer || !orderItems?.length || !shippingAddress) {
+    throw new Error("Missing required fields: customer, orderItems, shippingAddress");
   }
 
   // 1. Calculate items (including product-level discounts)
@@ -48,7 +48,7 @@ export const placeOrderService = async (data) => {
 
   // 4. Create order
   const newOrder = await Order.create({
-    user: userId,
+    user: userId || null,
     customer,
     orderItems: validatedItems,
     shippingAddress,
@@ -64,19 +64,20 @@ export const placeOrderService = async (data) => {
     paidAt: null,
   });
 
-  // 5. Update User profile with latest address/phone info
-  // We use the raw DB collection since Better-Auth handles the 'user' schema
-  await mongoose.connection.db.collection("user").updateOne(
-    { _id: userId },
-    {
-      $set: {
-        name: customer.name,
-        phoneNumber: customer.phone,
-        address: shippingAddress.address,
-        city: shippingAddress.city,
-      },
-    }
-  );
+  // 5. Update User profile with latest address/phone info (only for logged-in users)
+  if (userId) {
+    await mongoose.connection.db.collection("user").updateOne(
+      { _id: userId },
+      {
+        $set: {
+          name: customer.name,
+          phoneNumber: customer.phone,
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+        },
+      }
+    );
+  }
 
   // 6. Reduce stock
   for (const item of validatedItems) {

@@ -16,9 +16,11 @@ export const checkoutPreview = async (req, res) => {
   })
 };
 
-// Place Order 
+// Place Order — works for both guests and logged-in users
 export const placeOrder = async (req, res, next) => {
-  const result = await placeOrderService({ ...req.body, userId: req.user.id });
+  // userId comes from session if the user happens to be logged in; guests get null
+  const userId = req.user?.id ?? null;
+  const result = await placeOrderService({ ...req.body, userId });
 
   res.status(201).json({
     success: true,
@@ -44,6 +46,9 @@ export const getOrderById = async (req, res) => {
 }
 
 export const getMyOrders = async (req, res) => {
+  if (!req.user?.id) {
+    return res.status(401).json({ success: false, message: "Login required to view your orders" });
+  }
   const response = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
   res.status(200).json({
     success: true,
