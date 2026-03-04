@@ -65,18 +65,36 @@ export const placeOrderService = async (data) => {
   });
 
   // 5. Update User profile with latest address/phone info (only for logged-in users)
+  // OR create a new user record for guest customers
   if (userId) {
     await mongoose.connection.db.collection("user").updateOne(
       { _id: userId },
       {
         $set: {
-          name: customer.name,
+          name: shippingAddress.fullName,
           phoneNumber: customer.phone,
           address: shippingAddress.address,
           city: shippingAddress.city,
         },
       }
     );
+  } else {
+    // Guest checkout - check if user exists by email, if not create one
+    const existingUser = await mongoose.connection.db.collection("user").findOne({ email: customer.email });
+    
+    if (!existingUser) {
+      await mongoose.connection.db.collection("user").insertOne({
+        email: customer.email,
+        name: shippingAddress.fullName,
+        phoneNumber: customer.phone,
+        address: shippingAddress.address,
+        city: shippingAddress.city,
+        role: "customer",
+        emailVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
   }
 
   // 6. Reduce stock
