@@ -2,15 +2,15 @@ import ContactForm from "./contactForm.model.js";
 import UI from "./ui.model.js";
 
 export async function contactFormSend(req, res) {
-    const { fullName, email, message, subject } = req.body || {};
+    const { fullName, email, message, subject,business } = req.body || {};
 
     // Validate input
-    if (!fullName || !email || !message || !subject) {
+    if (!fullName || !email || !message || !subject || !business) {
         return res.status(400).json({ error: "All fields are required" });
     }
 
     // Save to MongoDB
-    const result = await ContactForm.create({ fullName, email, message, subject });
+    const result = await ContactForm.create({ fullName, email, message, subject,business });
 
     // Check if saving failed
     if (!result) {

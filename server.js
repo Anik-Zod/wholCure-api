@@ -11,17 +11,7 @@ import businessesRoute from "./modules/businesses/businesses.route.js";
 import jobRoute from "./modules/careers/jobs/job.route.js";
 import applicationRoute from "./modules/careers/applications/application.route.js";
 import AdminRouter from "./modules/admin/admin.route.js";
-import productRouter from "./modules/ogaglows/products/product.route.js";
-import customerRouter from "./modules/ogaglows/customers/customer.route.js";
-import contact_us_Router from "./modules/ogaglows/ogaglowContacts/contact.route.js";
 import MembarRouter from "./modules/admin/member/membar.route.js";
-import CouponRouter from "./modules/ogaglows/products/coupon/coupon.route.js";
-import ReviewRouter from "./modules/ogaglows/reviews/review.route.js";
-import OrderRoute from "./modules/ogaglows/orders/order.route.js";
-import ShippingRoute from "./modules/ogaglows/orders/shipping.route.js";
-import AboutUsRouter from "./modules/ogaglows/ogaglowAdmin/about-us.route.js";
-import ShippingCostRouter from "./modules/ogaglows/ogaglowAdmin/shipping-price.route.js";
-import HotDealRouter from "./modules/ogaglows/ogaglowAdmin/hot-deal.route.js";
 import uploadRouter from "./modules/upload/upload.route.js";
 
 dotenv.config();
@@ -51,7 +41,7 @@ const limiter = rateLimit({
 // app.use(limiter);
 
 // CORS Middleware (before any route)
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL, process.env.OGAGLOW_URL, process.env.OGAGLOW_ADMIN_URL, process.env.OGAGLOW_URL_LOCAL].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.FRONTEND_URL_LOCAL, process.env.ADMIN_URL_LOCAL].filter(Boolean);
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -91,7 +81,7 @@ app.use("/api/auth", (req, res, next) => {
       const hostname = new URL(req.headers.origin).hostname;
       if (hostname.startsWith("192.168.") || hostname.startsWith("10.") || hostname.startsWith("172.")) {
         // Mask the origin to localhost so better-auth accepts it as trusted
-        req.headers.origin = process.env.OGAGLOW_URL_LOCAL || "http://localhost:3000";
+        req.headers.origin = "http://localhost:3000";
       }
     } catch (e) { }
   }
@@ -111,17 +101,6 @@ app.use("/api/applications", applicationRoute);
 app.use("/api/admin", AdminRouter);
 app.use("/api/members", MembarRouter);
 
-// ogaglow
-app.use("/api/ogaglow/products", productRouter);
-app.use("/api/ogaglow/customers", customerRouter);
-app.use("/api/ogaglow/contact-us", contact_us_Router);
-app.use("/api/ogaglow/coupons", CouponRouter)
-app.use("/api/ogaglow/reviews", ReviewRouter);
-app.use("/api/ogaglow/orders", OrderRoute);
-app.use("/api/ogaglow/shipping", ShippingRoute);
-app.use("/api/ogaglow/about-us", AboutUsRouter);
-app.use("/api/ogaglow/shipping-price", ShippingCostRouter);
-app.use("/api/ogaglow/hot-deals", HotDealRouter);
 app.use("/api/upload", uploadRouter);
 // Health check route - only for the root path
 app.get("/api/health", (req, res) => {
