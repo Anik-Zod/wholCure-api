@@ -77,10 +77,24 @@ if (socialMedia) {
 //update member
 export async function updateMember(req, res) {
   const { id } = req.params;
-  const { name, email, phone, address, socialMedia, description, role } =
-    req.body;
+  let { name, email, phone, address, socialMedia, description, role } = req.body;
 
   try {
+    // safely convert socialMedia
+    if (socialMedia) {
+      try {
+        if (typeof socialMedia === "string") {
+          socialMedia = JSON.parse(socialMedia);
+        }
+        if (!Array.isArray(socialMedia)) {
+          socialMedia = [];
+        }
+      } catch (err) {
+        console.log("Invalid socialMedia:", socialMedia);
+        socialMedia = [];
+      }
+    }
+
     const updateData = {
       name,
       email,
