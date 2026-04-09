@@ -34,6 +34,8 @@ const jobSchema = new mongoose.Schema(
     salary_range: {          
       min: { type: Number },
       max: { type: Number },
+      is_negotiable: { type: Boolean, default: false },
+      is_unpaid: { type: Boolean, default: false },
     },
 
     is_active: { type: Boolean, default: true },

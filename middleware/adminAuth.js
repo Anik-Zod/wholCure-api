@@ -19,9 +19,19 @@ export const isAdminAuthenticated = (req, res, next) => {
 
 export const authorizeRole = (...roles) => {
     return (req, res, next) => {
+        if (!req.admin) {
+            return res.status(401).json({ success: false, message: "Unauthenticated." });
+        }
         if (!roles.includes(req.admin.role)) {
-            return res.status(403).json({ success: false, message: "Forbidden. You don't have access to this resource." });
+            return res.status(403).json({ success: false, message: `Access denied. Requires one of these roles: ${roles.join(", ")}` });
         }
         next();
     };
+};
+
+export const isSuperAdmin = (req, res, next) => {
+    if (!req.admin || req.admin.role !== 'superadmin') {
+        return res.status(403).json({ success: false, message: "Access denied. Super Admin privileges required." });
+    }
+    next();
 };

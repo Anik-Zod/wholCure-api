@@ -8,6 +8,11 @@ const adminSchema = new mongoose.Schema(
       trim: true,
     },
 
+    image: {
+      type: String,
+      default: "",
+    },
+
     email: {
       type: String,
       required: [true, "Please enter email"],
@@ -28,9 +33,22 @@ const adminSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "staff"],
-      default: "staff",
+      enum: ["superadmin", "admin"],
+      default: "admin",
     },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    resetPasswordOtp: String,
+    resetPasswordOtpExpires: Date,
   },
   { timestamps: true }
 );
