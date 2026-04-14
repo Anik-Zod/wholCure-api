@@ -1,5 +1,13 @@
 import express from "express";
-import addBusiness, { deleteBusiness, editBusiness, getAllBusiness, getBusinessById } from "./businesses.controller.js";
+import addBusiness, { 
+    deleteBusiness, 
+    editBusiness, 
+    getAllBusiness, 
+    getBusinessById,
+    addService,
+    editService,
+    deleteService
+} from "./businesses.controller.js";
 import upload from "../../middleware/upload.js";
 import { isAdminAuthenticated, authorizeRole } from "../../middleware/adminAuth.js";
 
@@ -25,12 +33,33 @@ businessesRoute.put(
     editBusiness
 );
 
+// Service Management Routes
+businessesRoute.post(
+    "/:id/services",
+    isAdminAuthenticated,
+    authorizeRole("superadmin", "admin"),
+    addService
+);
+
+businessesRoute.put(
+    "/:id/services/:serviceId",
+    isAdminAuthenticated,
+    authorizeRole("superadmin", "admin"),
+    editService
+);
+
+businessesRoute.delete(
+    "/:id/services/:serviceId",
+    isAdminAuthenticated,
+    authorizeRole("superadmin", "admin"),
+    deleteService
+);
+
 businessesRoute.delete(
     "/:id",
     isAdminAuthenticated,
     authorizeRole("superadmin"), // Only Super Admin can delete
     deleteBusiness
 );
-
 
 export default businessesRoute;

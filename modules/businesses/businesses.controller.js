@@ -59,7 +59,8 @@ export default async function addBusiness(req, res, next) {
             whyWeBest,
             partners: normalizeArray(partners),
             website,
-            images: imagesUrls
+            images: imagesUrls,
+            services: normalizeArray(req.body.services)
         });
 
         res.status(201).json({ message: "Business created successfully", data: response });
@@ -97,6 +98,7 @@ export async function editBusiness(req, res, next) {
         if (website !== undefined) updateFields.website = website;
         if (location !== undefined) updateFields.location = location;
         if (isVerified !== undefined) updateFields.isVerified = (isVerified === "true" || isVerified === true);
+        if (req.body.services !== undefined) updateFields.services = normalizeArray(req.body.services);
 
         // Handle Image Updates
         if (req.files?.logo?.[0]) {
@@ -186,5 +188,90 @@ export async function getBusinessById(req,res,next){
         return res.status(404).json({message:"Business not found"});
     }
     res.status(200).json({data:response});
+}
+
+// Add service to business
+export async function addService(req, res) {
+    try {
+        const { id } = req.params;
+        const { title, description, bgColour } = req.body;
+
+        if (!title) {
+            return res.status(400).json({ message: "Service title is required" });
+        }
+
+        const updatedBusiness = await business.findByIdAndUpdate(
+            id,
+            { $push: { services: { title, description, bgColour } } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedBusiness) {
+            return res.status(404).json({ message: "Business not found" });
+        }
+
+        res.status(201).json({
+            message: "Service added successfully",
+            data: updatedBusiness.services[updatedBusiness.services.length - 1]
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to add service", error: error.message });
+    }
+}
+
+// Edit service in business
+export async function editService(req, res) {
+    try {
+        const { id, serviceId } = req.params;
+        const { title, description, bgColour } = req.body;
+
+        // Construct update object for $set
+        const updateObj = {};
+        if (title !== undefined) updateObj["services.$.title"] = title;
+        if (description !== undefined) updateObj["services.$.description"] = description;
+        if (bgColour !== undefined) updateObj["services.$.bgColour"] = bgColour;
+
+        if (Object.keys(updateObj).length === 0) {
+            return res.status(400).json({ message: "No fields provided to update" });
+        }
+
+        const updatedBusiness = await business.findOneAndUpdate(
+            { _id: id, "services._id": serviceId },
+            { $set: updateObj },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedBusiness) {
+            return res.status(404).json({ message: "Business or service not found" });
+        }
+
+        res.status(200).json({
+            message: "Service updated successfully",
+            data: updatedBusiness.services.id(serviceId)
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to update service", error: error.message });
+    }
+}
+
+// Delete service from business
+export async function deleteService(req, res) {
+    try {
+        const { id, serviceId } = req.params;
+
+        const updatedBusiness = await business.findByIdAndUpdate(
+            id,
+            { $pull: { services: { _id: serviceId } } },
+            { new: true }
+        );
+
+        if (!updatedBusiness) {
+            return res.status(404).json({ message: "Business not found" });
+        }
+
+        res.status(200).json({ message: "Service deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to delete service", error: error.message });
+    }
 }
 

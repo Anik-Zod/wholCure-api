@@ -14,6 +14,13 @@ const businessSchema = new mongoose.Schema(
         partners: [{type:String}],
         website: {type:String},
         images: [{type:String}],
+        services: [
+            {
+                title: { type: String },
+                description: { type: String },
+                bgColour: { type: String },
+            },
+        ],
         details: { type: mongoose.Schema.Types.Mixed },
     },
     { timestamps: true }
