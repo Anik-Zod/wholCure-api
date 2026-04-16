@@ -132,6 +132,8 @@ export async function editBusiness(req, res, next) {
             return res.status(400).json({ message: "No valid fields provided to update" });
         }
 
+        console.log(`Updating Business ${id}:`, updateFields);
+
         const response = await business.findByIdAndUpdate(
             id,
             { $set: updateFields },
@@ -196,6 +198,10 @@ export async function addService(req, res) {
         const { id } = req.params;
         const { title, description, bgColour } = req.body;
 
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid Business ID" });
+        }
+
         if (!title) {
             return res.status(400).json({ message: "Service title is required" });
         }
@@ -210,11 +216,15 @@ export async function addService(req, res) {
             return res.status(404).json({ message: "Business not found" });
         }
 
+        // Return the specific added service by taking the last element
+        const addedService = updatedBusiness.services[updatedBusiness.services.length - 1];
+
         res.status(201).json({
             message: "Service added successfully",
-            data: updatedBusiness.services[updatedBusiness.services.length - 1]
+            data: addedService
         });
     } catch (error) {
+        console.error("Add Service Error:", error);
         res.status(500).json({ message: "Failed to add service", error: error.message });
     }
 }
@@ -224,6 +234,10 @@ export async function editService(req, res) {
     try {
         const { id, serviceId } = req.params;
         const { title, description, bgColour } = req.body;
+
+        if (!id || !mongoose.Types.ObjectId.isValid(id) || !serviceId || !mongoose.Types.ObjectId.isValid(serviceId)) {
+            return res.status(400).json({ message: "Invalid Business or Service ID" });
+        }
 
         // Construct update object for $set
         const updateObj = {};
@@ -245,11 +259,14 @@ export async function editService(req, res) {
             return res.status(404).json({ message: "Business or service not found" });
         }
 
+        const updatedService = updatedBusiness.services.id(serviceId);
+
         res.status(200).json({
             message: "Service updated successfully",
-            data: updatedBusiness.services.id(serviceId)
+            data: updatedService
         });
     } catch (error) {
+        console.error("Edit Service Error:", error);
         res.status(500).json({ message: "Failed to update service", error: error.message });
     }
 }

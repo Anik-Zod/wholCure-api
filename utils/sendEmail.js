@@ -13,7 +13,10 @@ const transporter = nodemailer.createTransport({
 
 export const sendAdminInvitationEmail = async (email, name, role, temporaryPassword, token) => {
     try {
-        const loginUrl = process.env.ADMIN_URL_LOCAL || "http://localhost:4000/auth/login"; // Adjust default as needed
+        const loginUrl = process.env.ADMIN_URL || process.env.ADMIN_URL_LOCAL || "http://localhost:4000/auth/login";
+        const apiBase = process.env.API_URL || `http://localhost:${process.env.PORT || 5000}/api`;
+        const confirmUrl = `${apiBase}/admin/confirm-promotion?token=${token}&action=confirm`;
+        const cancelUrl = `${apiBase}/admin/confirm-promotion?token=${token}&action=cancel`;
         const mailOptions = {
             from: `"WholCure Admin" <${process.env.EMAIL_USER}>`,
             to: email,
@@ -27,10 +30,10 @@ export const sendAdminInvitationEmail = async (email, name, role, temporaryPassw
                     <p>Please confirm this promotion via the button below. If you did not want this, you can safely cancel.</p>
 
                     <div style="margin: 25px 0;">
-                        <a href="http://localhost:5000/api/admin/confirm-promotion?token=${token}&action=confirm" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: white; background-color: #10B981; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">
+                        <a href="${confirmUrl}" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: white; background-color: #10B981; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">
                             Confirm Promotion
                         </a>
-                        <a href="http://localhost:5000/api/admin/confirm-promotion?token=${token}&action=cancel" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #4B5563; background-color: #F3F4F6; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px;">
+                        <a href="${cancelUrl}" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #4B5563; background-color: #F3F4F6; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px;">
                             Cancel
                         </a>
                     </div>

@@ -13,7 +13,11 @@ export const isAdminAuthenticated = (req, res, next) => {
         req.admin = decoded;
         next();
     } catch (error) {
-        return res.status(401).json({ success: false, message: "Invalid or expired token." });
+        console.error("Auth Token Verification Failed:", error.message);
+        return res.status(401).json({ 
+            success: false, 
+            message: error.name === 'TokenExpiredError' ? "Session expired. Please login again." : "Invalid or expired token." 
+        });
     }
 };
 
