@@ -16,7 +16,7 @@ import uploadRouter from "./modules/upload/upload.route.js";
 
 dotenv.config();
 const app = express();
-    
+         
 // If running behind a proxy/load balancer (like Vercel), trust first proxy so secure cookies and protocol detection work
 app.set('trust proxy', 1);
 
