@@ -13,7 +13,7 @@ import applicationRoute from "./modules/careers/applications/application.route.j
 import AdminRouter from "./modules/admin/admin.route.js";
 import MembarRouter from "./modules/admin/member/membar.route.js";
 import uploadRouter from "./modules/upload/upload.route.js";
-            
+                
 dotenv.config();
 const app = express();
                         
