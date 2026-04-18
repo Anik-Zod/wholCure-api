@@ -10,14 +10,20 @@ const normalizeArray = (input) => {
         const parsed = JSON.parse(input);
         return Array.isArray(parsed) ? parsed : [parsed];
     } catch (e) {
-        return typeof input === "string" ? input.split(",").map(s => s.trim()) : [input];
+        return typeof input === "string" ? input.split(",").map(s => s.trim()).filter(Boolean) : [input];
     }
 };
 
 // add business
 export default async function addBusiness(req, res, next) {
     try {
-        const { title, description, category, tags, details, whyWeBest, partners, website, location, isVerified } = req.body;
+        const {
+            title, description, category, tags,
+            isVerified, location, website,
+            mainDescription, mainButtonRewrite, mainButtonLink, mainButtonPDF,
+            serviceHeading, serviceSubHeading, features, industries,
+            whyWeBest, partners
+        } = req.body;
 
         if (!title || !description) {
             return res.status(400).json({ message: "Title and Description are required" });
@@ -51,14 +57,21 @@ export default async function addBusiness(req, res, next) {
             description,
             category,
             tags: normalizeArray(tags),
-            logo: logoUrl,
-            coverPhoto: coverPhotoUrl,
-            location: location || "Global / Remote",
             isVerified: isVerified === "true" || isVerified === true,
-            details,
+            location: location || "Global / Remote",
+            website,
+            mainDescription,
+            mainButtonRewrite,
+            mainButtonLink,
+            mainButtonPDF,
+            serviceHeading,
+            serviceSubHeading,
+            features: normalizeArray(features),
+            industries: normalizeArray(industries),
             whyWeBest,
             partners: normalizeArray(partners),
-            website,
+            logo: logoUrl,
+            coverPhoto: coverPhotoUrl,
             images: imagesUrls,
             services: normalizeArray(req.body.services)
         });
@@ -84,7 +97,13 @@ export async function editBusiness(req, res, next) {
             return res.status(400).json({ message: "Invalid Business ID" });
         }
 
-        const { title, description, category, tags, details, whyWeBest, partners, website, location, isVerified } = req.body;
+        const {
+            title, description, category, tags,
+            isVerified, location, website,
+            mainDescription, mainButtonRewrite, mainButtonLink, mainButtonPDF,
+            serviceHeading, serviceSubHeading, features, industries,
+            whyWeBest, partners
+        } = req.body;
 
         const updateFields = {};
 
@@ -92,12 +111,19 @@ export async function editBusiness(req, res, next) {
         if (description !== undefined) updateFields.description = description;
         if (category !== undefined) updateFields.category = category;
         if (tags !== undefined) updateFields.tags = normalizeArray(tags);
-        if (details !== undefined) updateFields.details = details;
+        if (isVerified !== undefined) updateFields.isVerified = (isVerified === "true" || isVerified === true);
+        if (location !== undefined) updateFields.location = location;
+        if (website !== undefined) updateFields.website = website;
+        if (mainDescription !== undefined) updateFields.mainDescription = mainDescription;
+        if (mainButtonRewrite !== undefined) updateFields.mainButtonRewrite = mainButtonRewrite;
+        if (mainButtonLink !== undefined) updateFields.mainButtonLink = mainButtonLink;
+        if (mainButtonPDF !== undefined) updateFields.mainButtonPDF = mainButtonPDF;
+        if (serviceHeading !== undefined) updateFields.serviceHeading = serviceHeading;
+        if (serviceSubHeading !== undefined) updateFields.serviceSubHeading = serviceSubHeading;
+        if (features !== undefined) updateFields.features = normalizeArray(features);
+        if (industries !== undefined) updateFields.industries = normalizeArray(industries);
         if (whyWeBest !== undefined) updateFields.whyWeBest = whyWeBest;
         if (partners !== undefined) updateFields.partners = normalizeArray(partners);
-        if (website !== undefined) updateFields.website = website;
-        if (location !== undefined) updateFields.location = location;
-        if (isVerified !== undefined) updateFields.isVerified = (isVerified === "true" || isVerified === true);
         if (req.body.services !== undefined) updateFields.services = normalizeArray(req.body.services);
 
         // Handle Image Updates
@@ -291,4 +317,3 @@ export async function deleteService(req, res) {
         res.status(500).json({ message: "Failed to delete service", error: error.message });
     }
 }
-
