@@ -15,171 +15,138 @@ const normalizeArray = (input) => {
 };
 
 // add business
+
 export default async function addBusiness(req, res, next) {
-    try {
-        const {
-            title, description, category, tags,
-            isVerified, location, website,
-            mainDescription, mainButtonRewrite, mainButtonLink, mainButtonPDF,
-            serviceHeading, serviceSubHeading, features, industries,
-            whyWeBest, partners
-        } = req.body;
+  try {
+    const {
+      title, description, category, tags,
+      isVerified, location, website, mainDescription,
+      mainButtonRewrite, mainButtonPDF, serviceHeading,
+      serviceSubHeading, features, industries,
+      whyWeBest, partners
+    } = req.body;
 
-        if (!title || !description) {
-            return res.status(400).json({ message: "Title and Description are required" });
-        }
 
-        // Handle Image Uploads
-        let logoUrl = req.body.logo || "";
-        if (req.files?.logo?.[0]) {
-            const result = await uploadBuffer(req.files.logo[0].buffer, "wholcare/businesses/logos");
-            logoUrl = result.secure_url;
-        }
-
-        let coverPhotoUrl = req.body.coverPhoto || "";
-        if (req.files?.coverPhoto?.[0]) {
-            const result = await uploadBuffer(req.files.coverPhoto[0].buffer, "wholcare/businesses/covers");
-            coverPhotoUrl = result.secure_url;
-        }
-
-        let imagesUrls = normalizeArray(req.body.images);
-        if (req.files?.images?.length) {
-            const uploadPromises = req.files.images.map(file =>
-                uploadBuffer(file.buffer, "wholcare/businesses/projects")
-            );
-            const uploadResults = await Promise.all(uploadPromises);
-            const newImages = uploadResults.map(r => r.secure_url);
-            imagesUrls = [...imagesUrls, ...newImages];
-        }
-
-        const response = await business.create({
-            title,
-            description,
-            category,
-            tags: normalizeArray(tags),
-            isVerified: isVerified === "true" || isVerified === true,
-            location: location || "Global / Remote",
-            website,
-            mainDescription,
-            mainButtonRewrite,
-            mainButtonLink,
-            mainButtonPDF,
-            serviceHeading,
-            serviceSubHeading,
-            features: normalizeArray(features),
-            industries: normalizeArray(industries),
-            whyWeBest,
-            partners: normalizeArray(partners),
-            logo: logoUrl,
-            coverPhoto: coverPhotoUrl,
-            images: imagesUrls,
-            services: normalizeArray(req.body.services)
-        });
-
-        res.status(201).json({ message: "Business created successfully", data: response });
-    } catch (error) {
-        console.error("Add Business Error:", error);
-        res.status(500).json({ message: "Failed to create business", error: error.message });
+    if (!title || !description) {
+      return res.status(400).json({ message: "Title and Description are required" });
     }
-}
+
+    const isVerifiedFlag = String(isVerified) === "true" || isVerified === true;
 
 
-//edit business
-export async function editBusiness(req, res, next) {
-    try {
-        const { id } = req.params;
+    let logoUrl = req.body.logo || "";
+    
+ 
+    if (req.files && req.files.logo && req.files.logo[0]) {
+      try {
+        const result = await uploadBuffer(req.files.logo[0].buffer, "wholcare/businesses/logos");
+        logoUrl = result.secure_url;
+      } catch (err) {
+        console.error("Logo upload failed, continuing without it:", err);
+        // Yahan 'return' nahi karna, taake business save ho jaye
+      }
+    }
 
-        if (!id) {
-            return res.status(400).json({ message: "Business ID is required" });
-        }
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: "Invalid Business ID" });
-        }
-
-        const {
-            title, description, category, tags,
-            isVerified, location, website,
-            mainDescription, mainButtonRewrite, mainButtonLink, mainButtonPDF,
-            serviceHeading, serviceSubHeading, features, industries,
-            whyWeBest, partners
-        } = req.body;
-
-        const updateFields = {};
-
-        if (title !== undefined) updateFields.title = title;
-        if (description !== undefined) updateFields.description = description;
-        if (category !== undefined) updateFields.category = category;
-        if (tags !== undefined) updateFields.tags = normalizeArray(tags);
-        if (isVerified !== undefined) updateFields.isVerified = (isVerified === "true" || isVerified === true);
-        if (location !== undefined) updateFields.location = location;
-        if (website !== undefined) updateFields.website = website;
-        if (mainDescription !== undefined) updateFields.mainDescription = mainDescription;
-        if (mainButtonRewrite !== undefined) updateFields.mainButtonRewrite = mainButtonRewrite;
-        if (mainButtonLink !== undefined) updateFields.mainButtonLink = mainButtonLink;
-        if (mainButtonPDF !== undefined) updateFields.mainButtonPDF = mainButtonPDF;
-        if (serviceHeading !== undefined) updateFields.serviceHeading = serviceHeading;
-        if (serviceSubHeading !== undefined) updateFields.serviceSubHeading = serviceSubHeading;
-        if (features !== undefined) updateFields.features = normalizeArray(features);
-        if (industries !== undefined) updateFields.industries = normalizeArray(industries);
-        if (whyWeBest !== undefined) updateFields.whyWeBest = whyWeBest;
-        if (partners !== undefined) updateFields.partners = normalizeArray(partners);
-        if (req.body.services !== undefined) updateFields.services = normalizeArray(req.body.services);
-
-        // Handle Image Updates
-        if (req.files?.logo?.[0]) {
-            const result = await uploadBuffer(req.files.logo[0].buffer, "wholcare/businesses/logos");
-            updateFields.logo = result.secure_url;
-        } else if (req.body.logo !== undefined) {
-            updateFields.logo = req.body.logo;
-        }
-
-        if (req.files?.coverPhoto?.[0]) {
-            const result = await uploadBuffer(req.files.coverPhoto[0].buffer, "wholcare/businesses/covers");
-            updateFields.coverPhoto = result.secure_url;
-        } else if (req.body.coverPhoto !== undefined) {
-            updateFields.coverPhoto = req.body.coverPhoto;
-        }
-
-        if (req.files?.images?.length) {
-            const uploadPromises = req.files.images.map(file =>
-                uploadBuffer(file.buffer, "wholcare/businesses/projects")
-            );
-            const uploadResults = await Promise.all(uploadPromises);
-            const newImages = uploadResults.map(r => r.secure_url);
-            
-            const baseImages = normalizeArray(req.body.images);
-            updateFields.images = [...baseImages, ...newImages];
-        } else if (req.body.images !== undefined) {
-            updateFields.images = normalizeArray(req.body.images);
-        }
-
-        if (Object.keys(updateFields).length === 0) {
-            return res.status(400).json({ message: "No valid fields provided to update" });
-        }
-
-        console.log(`Updating Business ${id}:`, updateFields);
-
-        const response = await business.findByIdAndUpdate(
-            id,
-            { $set: updateFields },
-            { new: true, runValidators: true }
+    let mainButtonLinkUrl = typeof req.body.mainButtonLink === "string" ? req.body.mainButtonLink : "";
+    
+    if (req.files && req.files.mainButtonLink && req.files.mainButtonLink[0]) {
+      try {
+        const result = await uploadBuffer(
+          req.files.mainButtonLink[0].buffer,
+          "wholcare/businesses/attachments"
         );
-
-        if (!response) {
-            return res.status(404).json({ message: "Business not found" });
-        }
-
-        res.status(200).json({
-            message: "Business updated successfully",
-            data: response
-        });
-    } catch (error) {
-        console.error("Edit Business Error:", error);
-        res.status(500).json({ message: "Failed to update business", error: error.message });
+        mainButtonLinkUrl = result.secure_url;
+      } catch (err) {
+        console.error("Attachment upload failed, continuing:", err);
+   
+      }
     }
+
+  
+    const payload = {
+      title,
+      description,
+      category,
+      tags: normalizeArray(tags),
+      isVerified: isVerifiedFlag,
+      location: location || "Global / Remote",
+      website,
+      mainDescription,
+      mainButtonRewrite,
+      mainButtonLink: mainButtonLinkUrl,
+      mainButtonPDF,
+      serviceHeading,
+      serviceSubHeading,
+      features: normalizeArray(features),
+      industries: normalizeArray(industries),
+      whyWeBest,
+      partners: normalizeArray(partners),
+      logo: logoUrl,
+      services: normalizeArray(req.body.services)
+    };
+
+    
+    const response = await business.create(payload);
+
+    return res.status(201).json({ 
+      message: "Business created successfully", 
+      data: response 
+    });
+
+  } catch (error) {
+    console.error("Add Business Error:", error);
+    return res.status(500).json({ 
+      message: "Failed to create business", 
+      error: error.message 
+    });
+  }
 }
 
+export const editBusiness = async (req, res) => {
+  try {
+    // DEBUG: Check karein ke file aa rahi hai ya nahi
+    console.log("Files received:", req.files);
+    console.log("Body received:", req.body);
+
+    let updateData = { ...req.body };
+
+    // 1. Services parsing
+    if (updateData.services && typeof updateData.services === 'string') {
+      try {
+        updateData.services = JSON.parse(updateData.services);
+      } catch (e) {
+        console.log("Services parsing failed");
+      }
+    }
+
+    // 2. Logo Upload Logic
+    if (req.files && req.files.logo && req.files.logo[0]) {
+      console.log("Uploading image to Cloudinary...");
+      const result = await uploadBuffer(req.files.logo[0].buffer, "wholcare/businesses/logos");
+      
+      // Yahan hum updateData mein direct link daal rahe hain
+      updateData.logo = result.secure_url; 
+      console.log("New Logo URL:", updateData.logo);
+    }
+
+    // 3. Update in Database
+    const updatedBusiness = await business.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData }, // $set use karna zyada safe hota hai
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedBusiness) {
+      return res.status(404).json({ success: false, message: "Business not found" });
+    }
+
+    res.status(200).json({ success: true, data: updatedBusiness });
+  } catch (error) {
+    console.error("Backend Error Details:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 //delete business
 export async function deleteBusiness(req,res,next){
     const {id} = req.params;

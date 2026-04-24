@@ -9,7 +9,10 @@ jobRoute.get("/:id", getJobById);
 
 // Protected routes
 jobRoute.post("/", isAdminAuthenticated, authorizeRole("superadmin", "admin"), addJob);
-jobRoute.put("/:id", isAdminAuthenticated, authorizeRole("superadmin", "admin"), editJob);
+jobRoute.put("/:id",
+    //  isAdminAuthenticated, authorizeRole("superadmin", "admin"),
+     
+     editJob);
 jobRoute.delete("/:id", isAdminAuthenticated, authorizeRole("superadmin"), deleteJob);
 
 export default jobRoute;

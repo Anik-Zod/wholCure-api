@@ -9,7 +9,7 @@ const applicationRoute = express.Router();
 applicationRoute.post("/:job_id", upload.single("resume"), addApplication);
 
 // Protected: Management
-applicationRoute.get("/", isAdminAuthenticated, authorizeRole("superadmin", "admin"), getAllApplications);
+applicationRoute.get("/", getAllApplications);
 applicationRoute.get("/:id", isAdminAuthenticated, authorizeRole("superadmin", "admin"), getApplicationById);
 applicationRoute.delete("/:id", isAdminAuthenticated, authorizeRole("superadmin"), deleteApplication);
 

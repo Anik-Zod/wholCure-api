@@ -23,8 +23,7 @@ const businessSchema = new mongoose.Schema(
 
         // Media
         logo: { type: String },
-        coverPhoto: { type: String },
-        images: [{ type: String }],
+    
 
         // Legacy/Other
         whyWeBest: { type: String },
